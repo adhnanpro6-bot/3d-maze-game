@@ -5,7 +5,7 @@ const VERIFY_ENDPOINT = "/api/verify-code";
 const RESUME_ENDPOINT = "/api/resume-session";
 const PROGRESS_ENDPOINT = "/api/save-progress";
 
-const TOTAL_STAGES = 12;
+const TOTAL_DOORS = 10;
 
 const GOOGLE_FORM_CONFIG = {
   enabled: false,
@@ -17,109 +17,86 @@ const GOOGLE_FORM_CONFIG = {
   }
 };
 
-// 12 Stages with Maths, GK, and Sports Clues + Fake Keys + Fake Routes
-// Left lane x ≈ -5.2 | Center x ≈ 0 | Right lane x ≈ +5.2
-const TREASURE_STAGES = [
+// 10 Door Questions (Maths, GK & Sports) — Answer is case-insensitive trimmed string
+const DOOR_QUESTIONS = [
   {
-    stage: 1,
-    category: "MATHS CLUE",
-    doorZ: -10,
-    clue: "🔢 Maths Clue 1: (18 ÷ 3) + 2 = 8 (Even). ഇരട്ട സംഖ്യ ഇടതുവശത്തെ (LEFT) ഇടനാഴിയിൽ കീ തിരയുക!",
-    keyPos: { x: -5.2, z: -6.5 },
-    fakeKeys: [{ x: 5.2, z: -6.5 }]
+    door: 1,
+    category: "MATHS",
+    question: "Door 1 (Maths): 14 + 28 എത്രയാണ്?",
+    answer: "42"
   },
   {
-    stage: 2,
-    category: "SPORTS CLUE",
-    doorZ: -21,
-    clue: "⚽ Sports Clue 2: ഒരു ഫുട്ബോൾ ടീമിൽ 11 കളിക്കാർ (Odd). ഒറ്റസംഖ്യ വലതുവശത്തെ (RIGHT) ഭാഗത്ത് കീ ഉണ്ട്!",
-    keyPos: { x: 5.2, z: -17.0 },
-    fakeKeys: [{ x: -5.2, z: -16.5 }, { x: 0, z: -14.5 }]
+    door: 2,
+    category: "SPORTS",
+    question: "Door 2 (Sports): ഒരു ഫുട്ബോൾ ടീമിൽ സാധാരണയായി എത്ര കളിക്കാർ കളിക്കുന്നു?",
+    answer: "11"
   },
   {
-    stage: 3,
-    category: "GK CLUE",
-    doorZ: -32,
-    clue: "🌍 GK Clue 3: കേരളത്തിൽ 14 ജില്ലകൾ (Even). ഇടതുവശത്തെ (LEFT) മറവിൽ കീ ഒളിഞ്ഞിരിപ്പുണ്ട്.",
-    keyPos: { x: -5.2, z: -27.5 },
-    fakeKeys: [{ x: 5.2, z: -27.5 }]
+    door: 3,
+    category: "GK",
+    question: "Door 3 (GK): കേരളത്തിൽ ആകെ എത്ര ജില്ലകളുണ്ട്?",
+    answer: "14"
   },
   {
-    stage: 4,
-    category: "MATHS CLUE",
-    doorZ: -43,
-    clue: "🔢 Maths Clue 4: 9 × 3 = 27 (Odd). വലതുവശത്തെ (RIGHT) ശാഖയിൽ കീ കണ്ടെത്തുക!",
-    keyPos: { x: 5.2, z: -38.5 },
-    fakeKeys: [{ x: -5.2, z: -38.5 }, { x: -5.2, z: -35.5 }]
+    door: 4,
+    category: "MATHS",
+    question: "Door 4 (Maths): 12 × 6 എത്രയാണ്?",
+    answer: "72"
   },
   {
-    stage: 5,
-    category: "SPORTS CLUE",
-    doorZ: -54,
-    clue: "🏆 Sports Clue 5: FIFA ലോകകപ്പ് 4 വർഷത്തിലൊരിക്കൽ (Even). ഇടതുവശത്തെ (LEFT) ചുവരിനരികിൽ കീ തിരയുക!",
-    keyPos: { x: -5.2, z: -49.0 },
-    fakeKeys: [{ x: 5.2, z: -49.0 }]
+    door: 5,
+    category: "SPORTS",
+    question: "Door 5 (Sports): FIFA ലോകകപ്പ് എത്ര വർഷം കൂടുമ്പോഴാണ് നടക്കുന്നത്?",
+    answer: "4"
   },
   {
-    stage: 6,
-    category: "GK CLUE",
-    doorZ: -65,
-    clue: "🌍 GK Clue 6: ലോകത്തിലെ ഏറ്റവും വലിയ ഭൂഖണ്ഡം ഏഷ്യ (1). 1 = വലതുവശം (RIGHT) — അവിടെ കീ ഉണ്ട്!",
-    keyPos: { x: 5.2, z: -60.0 },
-    fakeKeys: [{ x: -5.2, z: -60.0 }, { x: 0, z: -58.0 }]
+    door: 6,
+    category: "GK",
+    question: "Door 6 (GK): ഇന്ത്യയുടെ തലസ്ഥാന നഗരം ഏതാണ്?",
+    answer: "NEW DELHI"
   },
   {
-    stage: 7,
-    category: "MATHS CLUE",
-    doorZ: -76,
-    clue: "🔢 Maths Clue 7: 100 - 64 = 36 (Even). ഇടതുവശത്തെ (LEFT) ഇടനാഴിയിലേക്ക് തിരിയുക!",
-    keyPos: { x: -5.2, z: -71.0 },
-    fakeKeys: [{ x: 5.2, z: -71.0 }, { x: 5.2, z: -68.5 }]
+    door: 7,
+    category: "MATHS",
+    question: "Door 7 (Maths): 150 - 67 എത്രയാണ്?",
+    answer: "83"
   },
   {
-    stage: 8,
-    category: "SPORTS CLUE",
-    doorZ: -87,
-    clue: "🏏 Sports Clue 8: ക്രിക്കറ്റ് ടെസ്റ്റ് ഇന്നിംഗ്സ്/ടീം ഘടനയിൽ 11 (Odd). വലതുവശത്തെ (RIGHT) മൂലയിൽ കീ ഉണ്ട്!",
-    keyPos: { x: 5.2, z: -82.0 },
-    fakeKeys: [{ x: -5.2, z: -82.0 }]
+    door: 8,
+    category: "SPORTS",
+    question: "Door 8 (Sports): ഒളിമ്പിക് പതാകയിൽ എത്ര വളയങ്ങളുണ്ട്?",
+    answer: "5"
   },
   {
-    stage: 9,
-    category: "GK CLUE",
-    doorZ: -98,
-    clue: "🌍 GK Clue 9: സൂര്യയൂഥത്തിലെ ഏറ്റവും വലിയ ഗ്രഹം വ്യാഴം (Jupiter — J = Left/Even). ഇടതുവശത്തെ (LEFT) ഭാഗത്ത് കീ തിരയുക!",
-    keyPos: { x: -5.2, z: -93.0 },
-    fakeKeys: [{ x: 5.2, z: -93.0 }, { x: 0, z: -91.0 }]
+    door: 9,
+    category: "GK",
+    question: "Door 9 (GK): സൗരയൂഥത്തിലെ ഏറ്റവും വലിയ ഗ്രഹം ഏതാണ്?",
+    answer: "JUPITER"
   },
   {
-    stage: 10,
-    category: "MATHS CLUE",
-    doorZ: -109,
-    clue: "🔢 Maths Clue 10: 15 × 3 = 45 (Odd). വലതുവശത്തെ (RIGHT) ഭാഗത്ത് കീ ഒളിപ്പിച്ചിട്ടുണ്ട്!",
-    keyPos: { x: 5.2, z: -104.0 },
-    fakeKeys: [{ x: -5.2, z: -104.0 }, { x: -5.2, z: -101.5 }]
-  },
-  {
-    stage: 11,
-    category: "SPORTS CLUE",
-    doorZ: -120,
-    clue: "🏅 Sports Clue 11: ഒളിമ്പിക് റിംഗുകൾ 5 എണ്ണം (Odd -> Right). വലതുവശത്തെ (RIGHT) ഇടനാഴിയിൽ കീ കണ്ടെത്തുക!",
-    keyPos: { x: 5.2, z: -115.0 },
-    fakeKeys: [{ x: -5.2, z: -115.0 }]
-  },
-  {
-    stage: 12,
-    category: "GK CLUE (FINAL)",
-    doorZ: -131,
-    clue: "🔥 Final GK Clue 12: ഇന്ത്യയുടെ ഭരണഘടന നിലവിൽ വന്ന വർഷം 1950 (Even -> Left). അവസാന കീ ഇടതുവശത്ത് (LEFT)!",
-    keyPos: { x: -5.2, z: -126.0 },
-    fakeKeys: [{ x: 5.2, z: -126.0 }, { x: 0, z: -124.0 }]
+    door: 10,
+    category: "MATHS & FINAL",
+    question: "Door 10 (Maths): 9² (9 square) എത്രയാണ്? ശരിയാക്കിയാൽ Centre Fountain തുറക്കും!",
+    answer: "81"
   }
 ];
 
+// Single ordered path of 10 Doors leading from South Entrance (z = +36) into Centre Fountain Plaza (x = 0, z = 0)
+const DOOR_WAYPOINTS = [
+  { x: 0, z: 28, rotY: 0 },
+  { x: -16, z: 22, rotY: Math.PI / 2 },
+  { x: -16, z: 8, rotY: Math.PI / 2 },
+  { x: -8, z: -14, rotY: 0 },
+  { x: 10, z: -18, rotY: 0 },
+  { x: 18, z: -8, rotY: Math.PI / 2 },
+  { x: 18, z: 12, rotY: Math.PI / 2 },
+  { x: 8, z: 18, rotY: 0 },
+  { x: 6, z: 5, rotY: Math.PI / 2 },
+  { x: 0, z: -6.5, rotY: 0 }
+];
+
 // ==========================================
-// 2. DOM ELEMENTS & BANNERS
+// 2. DOM ELEMENTS & QUESTION MODAL
 // ==========================================
 const UI = {
   accessScreen: document.getElementById("access-screen"),
@@ -145,64 +122,82 @@ const UI = {
   btnRight: document.getElementById("btn-right")
 };
 
-const clueBanner = document.createElement("div");
-clueBanner.id = "treasure-clue-banner";
-clueBanner.style.cssText = [
-  "position: fixed",
-  "top: 56px",
-  "left: 50%",
-  "transform: translateX(-50%)",
-  "z-index: 25",
-  "max-width: 94vw",
-  "padding: 10px 16px",
-  "border-radius: 10px",
-  "background: rgba(10, 17, 34, 0.92)",
-  "border: 1px solid rgba(255, 209, 102, 0.75)",
-  "color: #ffd166",
-  "font-size: 13.5px",
-  "font-weight: 600",
-  "text-align: center",
-  "display: none",
-  "box-shadow: 0 6px 22px rgba(0,0,0,0.5)"
-].join(";");
-document.body.appendChild(clueBanner);
+// Build clean Question Modal dynamically if not present in index.html
+let questionModal = document.getElementById("puzzle-modal");
+if (!questionModal) {
+  questionModal = document.createElement("div");
+  questionModal.id = "dynamic-door-question-modal";
+  questionModal.style.cssText = [
+    "position: fixed",
+    "inset: 0",
+    "z-index: 40",
+    "display: none",
+    "align-items: center",
+    "justify-content: center",
+    "background: rgba(4, 8, 16, 0.82)",
+    "backdrop-filter: blur(4px)",
+    "padding: 16px"
+  ].join(";");
 
-const toastBanner = document.createElement("div");
-toastBanner.id = "treasure-toast";
-toastBanner.style.cssText = [
+  questionModal.innerHTML = `
+    <div style="width:100%;max-width:420px;background:#101a2e;border:1px solid rgba(255,209,102,0.5);border-radius:14px;padding:22px;color:#f0f6fc;box-shadow:0 16px 40px rgba(0,0,0,0.65);font-family:system-ui,sans-serif;">
+      <div id="dq-badge" style="display:inline-block;padding:4px 10px;border-radius:999px;background:rgba(255,209,102,0.16);color:#ffd166;font-size:12px;font-weight:700;margin-bottom:10px;">DOOR LOCK</div>
+      <h3 id="dq-question" style="margin:0 0 14px 0;font-size:17px;line-height:1.45;color:#ffffff;"></h3>
+      <input id="dq-input" type="text" placeholder="ഉത്തരം ടൈപ്പ് ചെയ്യുക..." autocomplete="off"
+        style="width:100%;box-sizing:border-box;padding:11px 12px;border-radius:8px;border:1px solid #334870;background:#09101d;color:#fff;font-size:15px;margin-bottom:12px;outline:none;" />
+      <div id="dq-feedback" style="min-height:20px;font-size:13px;color:#ff6b6b;margin-bottom:10px;"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button id="dq-back-btn" type="button" style="padding:9px 14px;border-radius:8px;border:1px solid #394b6b;background:transparent;color:#cbd5e1;cursor:pointer;">പിന്നോട്ട്</button>
+        <button id="dq-submit-btn" type="button" style="padding:9px 18px;border-radius:8px;border:none;background:#2ea043;color:#fff;font-weight:700;cursor:pointer;">വാതിൽ തുറക്കുക</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(questionModal);
+}
+
+const dqBadge = questionModal.querySelector("#dq-badge") || document.getElementById("puzzle-title");
+const dqQuestion = questionModal.querySelector("#dq-question") || document.getElementById("puzzle-question");
+const dqInput = questionModal.querySelector("#dq-input") || document.getElementById("puzzle-answer");
+const dqFeedback = questionModal.querySelector("#dq-feedback") || document.getElementById("puzzle-feedback");
+const dqBackBtn = questionModal.querySelector("#dq-back-btn") || document.getElementById("puzzle-close-btn");
+const dqSubmitBtn = questionModal.querySelector("#dq-submit-btn") || document.getElementById("puzzle-submit-btn");
+
+const infoBanner = document.createElement("div");
+infoBanner.style.cssText = [
   "position: fixed",
-  "bottom: 118px",
+  "top: 54px",
   "left: 50%",
   "transform: translateX(-50%)",
   "z-index: 25",
   "max-width: 92vw",
   "padding: 8px 14px",
-  "border-radius: 8px",
-  "background: rgba(18, 28, 48, 0.94)",
-  "border: 1px solid rgba(255,255,255,0.15)",
-  "color: #7ee787",
+  "border-radius: 9px",
+  "background: rgba(9, 16, 29, 0.88)",
+  "border: 1px solid rgba(110, 231, 183, 0.45)",
+  "color: #a7f3d0",
   "font-size: 13px",
+  "font-weight: 600",
   "text-align: center",
   "display: none"
 ].join(";");
-document.body.appendChild(toastBanner);
+document.body.appendChild(infoBanner);
 
-let toastTimeout = null;
-function showToast(msg, color = "#7ee787") {
-  toastBanner.textContent = msg;
-  toastBanner.style.color = color;
-  toastBanner.style.display = "block";
-  clearTimeout(toastTimeout);
-  toastTimeout = setTimeout(() => {
-    toastBanner.style.display = "none";
+let bannerTimer = null;
+function showInfoBanner(msg, color = "#a7f3d0") {
+  infoBanner.textContent = msg;
+  infoBanner.style.color = color;
+  infoBanner.style.display = "block";
+  clearTimeout(bannerTimer);
+  bannerTimer = setTimeout(() => {
+    infoBanner.style.display = "none";
   }, 2400);
 }
 
 // ==========================================
-// 3. SOUND EFFECTS (Web Audio API)
+// 3. AUDIO FEEDBACK (Web Audio API)
 // ==========================================
 let audioCtx = null;
-function playTone(freq = 640, type = "triangle", duration = 0.18) {
+function playDoorSound(success = true) {
   try {
     if (!audioCtx) {
       const AC = window.AudioContext || window.webkitAudioContext;
@@ -212,20 +207,20 @@ function playTone(freq = 640, type = "triangle", duration = 0.18) {
 
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    osc.type = success ? "triangle" : "sawtooth";
+    osc.frequency.setValueAtTime(success ? 520 : 210, audioCtx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(
-      type === "sawtooth" ? freq * 0.55 : freq * 1.45,
-      audioCtx.currentTime + duration
+      success ? 880 : 130,
+      audioCtx.currentTime + 0.2
     );
 
     gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.22);
 
     osc.connect(gain);
     gain.connect(audioCtx.destination);
     osc.start();
-    osc.stop(audioCtx.currentTime + duration + 0.03);
+    osc.stop(audioCtx.currentTime + 0.23);
   } catch (_) {}
 }
 
@@ -237,10 +232,9 @@ let sessionState = {
   sessionId: "",
   playerName: "",
   accessCode: "",
-  currentStageIndex: 0, // 0..11
-  collectedKeys: Array(TOTAL_STAGES).fill(false),
-  unlockedDoors: Array(TOTAL_STAGES).fill(false),
-  fakeKeyCooldown: 0,
+  currentDoorIndex: 0, // 0..9 (10 doors)
+  unlockedDoors: Array(TOTAL_DOORS).fill(false),
+  activeQuestionDoorIndex: null,
   startTimeMs: 0,
   elapsedSeconds: 0,
   finished: false
@@ -258,9 +252,7 @@ const keys = {
 // ==========================================
 function persistSessionId(sessionId) {
   if (!sessionId) return;
-  try {
-    window.name = JSON.stringify({ mazeSessionId: sessionId });
-  } catch (_) {}
+  try { window.name = JSON.stringify({ mazeSessionId: sessionId }); } catch (_) {}
   try {
     history.replaceState(null, "", "#session=" + encodeURIComponent(sessionId));
   } catch (_) {
@@ -296,7 +288,7 @@ async function saveProgressToServer(finished = false) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         sessionId: sessionState.sessionId,
-        doorIndex: sessionState.currentStageIndex,
+        doorIndex: sessionState.currentDoorIndex,
         elapsedSeconds: Number(sessionState.elapsedSeconds.toFixed(2)),
         finished
       })
@@ -328,7 +320,7 @@ async function tryResumeExistingSession() {
   const existingId = readPersistedSessionId();
   if (!existingId) return false;
 
-  setLoginStatus("പഴയ 12-Door Treasure Hunt സെഷൻ തുടരുന്നു...", false);
+  setLoginStatus("പഴയ Hedge Maze സെഷൻ തുടരുന്നു...", false);
   try {
     const response = await fetch(RESUME_ENDPOINT, {
       method: "POST",
@@ -400,109 +392,151 @@ function setLoginStatus(msg, isError) {
   UI.loginStatus.style.color = isError ? "#ff6b6b" : "#7ee787";
 }
 
-function updateHudAndClue() {
-  const idx = sessionState.currentStageIndex;
-  if (UI.hudDoor) {
-    UI.hudDoor.textContent = `Door: ${Math.min(idx + 1, TOTAL_STAGES)} / ${TOTAL_STAGES}`;
-  }
-
-  if (idx < TREASURE_STAGES.length) {
-    const stageInfo = TREASURE_STAGES[idx];
-    const hasKey = sessionState.collectedKeys[idx];
-    clueBanner.style.display = "block";
-    clueBanner.textContent = hasKey
-      ? `🔑 Key ${idx + 1} ലഭിച്ചു! Door ${idx + 1} കടന്ന് അടുത്ത സോണിലേക്ക് നീങ്ങുക.`
-      : stageInfo.clue;
-  } else {
-    clueBanner.style.display = "block";
-    clueBanner.textContent = "🏆 12 വാതിലുകളും പൂർത്തിയായി! മുന്നിലുള്ള ഗോൾഡൻ ഫിനിഷ് സോണിലേക്ക് ഓടുക!";
-  }
+function updateHudDoor() {
+  if (!UI.hudDoor) return;
+  const shownDoor = Math.min(sessionState.currentDoorIndex + 1, TOTAL_DOORS);
+  UI.hudDoor.textContent = sessionState.currentDoorIndex >= TOTAL_DOORS
+    ? "Centre Fountain Open!"
+    : `Door: ${shownDoor} / ${TOTAL_DOORS}`;
 }
 
 function startSession({ sessionId, playerName, accessCode, doorIndex, elapsedSeconds }) {
-  const safeIdx = Math.max(0, Math.min(doorIndex, TOTAL_STAGES));
+  const safeIdx = Math.max(0, Math.min(doorIndex, TOTAL_DOORS));
 
   sessionState = {
     active: true,
     sessionId,
     playerName,
     accessCode,
-    currentStageIndex: safeIdx,
-    collectedKeys: Array(TOTAL_STAGES).fill(false).map((_, i) => i < safeIdx),
-    unlockedDoors: Array(TOTAL_STAGES).fill(false).map((_, i) => i < safeIdx),
-    fakeKeyCooldown: 0,
+    currentDoorIndex: safeIdx,
+    unlockedDoors: Array(TOTAL_DOORS).fill(false).map((_, i) => i < safeIdx),
+    activeQuestionDoorIndex: null,
     startTimeMs: performance.now() - elapsedSeconds * 1000,
     elapsedSeconds,
     finished: false
   };
 
   persistSessionId(sessionId);
-  syncWorldWithSession();
+  syncMazeWithSession();
 
   if (UI.accessScreen) UI.accessScreen.style.display = "none";
   if (UI.winModal) UI.winModal.style.display = "none";
   if (UI.hud) UI.hud.style.display = "flex";
   if (UI.hudPlayer) UI.hudPlayer.textContent = `Player: ${playerName}`;
-  updateHudAndClue();
+  updateHudDoor();
+  showInfoBanner("നടുവിലെ Centre Fountain ലക്ഷ്യമാക്കി 10 വാതിലുകളും കടന്ന് മുന്നേറുക!");
 }
 
 // ==========================================
-// 6. ENLARGED 3D MAZE, FAKE ROUTES, FAKE KEYS & KALAKERALA WALL ADS
+// 6. PROCEDURAL TEXTURES & ENHANCED 3D HEDGE MAZE
 // ==========================================
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x070b14);
-scene.fog = new THREE.Fog(0x070b14, 14, 46);
+function createHedgeTexture() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 256;
+  const ctx = canvas.getContext("2d");
 
-const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.1, 140);
+  ctx.fillStyle = "#2d6a2e";
+  ctx.fillRect(0, 0, 256, 256);
+
+  for (let i = 0; i < 1600; i++) {
+    const x = Math.random() * 256;
+    const y = Math.random() * 256;
+    const r = 2 + Math.random() * 5;
+    const shades = ["#1f4e20", "#3b8238", "#4c9a44", "#275d28"];
+    ctx.fillStyle = shades[Math.floor(Math.random() * shades.length)];
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(2, 2);
+  return tex;
+}
+
+function createStoneGroundTexture() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 256;
+  const ctx = canvas.getContext("2d");
+
+  ctx.fillStyle = "#cfc3a7";
+  ctx.fillRect(0, 0, 256, 256);
+
+  ctx.strokeStyle = "#b5a788";
+  ctx.lineWidth = 2;
+  for (let y = 0; y < 256; y += 32) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(256, y);
+    ctx.stroke();
+    for (let x = (y % 64 === 0 ? 0 : 32); x < 256; x += 64) {
+      ctx.strokeRect(x, y, 64, 32);
+    }
+  }
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(16, 16);
+  return tex;
+}
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0c1624);
+scene.fog = new THREE.FogExp2(0x0c1624, 0.014);
+
+const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.1, 160);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 UI.canvasContainer.appendChild(renderer.domElement);
 
-scene.add(new THREE.AmbientLight(0xffffff, 0.78));
-const dirLight = new THREE.DirectionalLight(0xfff4d6, 1.0);
-dirLight.position.set(12, 24, 15);
-scene.add(dirLight);
+// Rich lighting
+const hemiLight = new THREE.HemisphereLight(0xdff6ff, 0x2c4726, 0.95);
+scene.add(hemiLight);
 
-// Enlarged Maze Floor (-144 to +10 along Z, width 22)
-const mazeCenterZ = -67;
-const mazeLengthZ = 156;
-const floor = new THREE.Mesh(
-  new THREE.PlaneGeometry(24, mazeLengthZ),
-  new THREE.MeshStandardMaterial({ color: 0x111a2e, roughness: 0.85 })
+const sunLight = new THREE.DirectionalLight(0xfff1c9, 1.15);
+sunLight.position.set(22, 38, 26);
+sunLight.castShadow = true;
+sunLight.shadow.mapSize.set(1024, 1024);
+scene.add(sunLight);
+
+// Stone courtyard & green lawn border (matching hedge maze image)
+const lawnGround = new THREE.Mesh(
+  new THREE.PlaneGeometry(110, 110),
+  new THREE.MeshStandardMaterial({ color: 0x3f7d2c, roughness: 0.9 })
 );
-floor.rotation.x = -Math.PI / 2;
-floor.position.set(0, 0, mazeCenterZ);
-scene.add(floor);
+lawnGround.rotation.x = -Math.PI / 2;
+lawnGround.position.y = -0.06;
+scene.add(lawnGround);
 
-const wallMat = new THREE.MeshStandardMaterial({ color: 0x24365c, roughness: 0.6 });
-const fakeRouteWallMat = new THREE.MeshStandardMaterial({ color: 0x1a2744, roughness: 0.7 });
-const lockedDoorMat = new THREE.MeshStandardMaterial({ color: 0xd94848, roughness: 0.4 });
-const realKeyMat = new THREE.MeshStandardMaterial({
-  color: 0xffd166,
-  emissive: 0x8a5a00,
-  metalness: 0.55,
-  roughness: 0.25
-});
-const fakeKeyMat = new THREE.MeshStandardMaterial({
-  color: 0x4ea8de,
-  emissive: 0x113a5c,
-  metalness: 0.4,
-  roughness: 0.35
+const stonePlaza = new THREE.Mesh(
+  new THREE.PlaneGeometry(66, 66),
+  new THREE.MeshStandardMaterial({ map: createStoneGroundTexture(), roughness: 0.75 })
+);
+stonePlaza.rotation.x = -Math.PI / 2;
+stonePlaza.receiveShadow = true;
+scene.add(stonePlaza);
+
+// Hedge material & wall colliders
+const hedgeMat = new THREE.MeshStandardMaterial({
+  map: createHedgeTexture(),
+  roughness: 0.85,
+  metalness: 0.05
 });
 
 const wallColliders = [];
-const doorObjects = [];
-const realKeyObjects = [];
-const fakeKeyObjects = [];
-
-function addWall(x, y, z, w, h, d, isFakeRoute = false) {
-  const mesh = new THREE.Mesh(
-    new THREE.BoxGeometry(w, h, d),
-    isFakeRoute ? fakeRouteWallMat : wallMat
-  );
-  mesh.position.set(x, y, z);
+function addHedgeWall(x, z, w, d, h = 3.2) {
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), hedgeMat);
+  mesh.position.set(x, h / 2, z);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
   scene.add(mesh);
+
   wallColliders.push({
     minX: x - w / 2,
     maxX: x + w / 2,
@@ -511,181 +545,221 @@ function addWall(x, y, z, w, h, d, isFakeRoute = false) {
   });
 }
 
-// Outer maze boundary walls (x = -8.5 and +8.5, total playable width ~16)
-addWall(-8.5, 1.6, mazeCenterZ, 1, 3.2, mazeLengthZ);
-addWall(8.5, 1.6, mazeCenterZ, 1, 3.2, mazeLengthZ);
-addWall(0, 1.6, 10, 18, 3.2, 1);
-addWall(0, 1.6, -144, 18, 3.2, 1);
+// Outer perimeter hedge walls with single entrance opening at South (x = 0, z = +31)
+addHedgeWall(-16.5, 31, 30, 2.2);
+addHedgeWall(16.5, 31, 30, 2.2);
+addHedgeWall(0, -31, 64, 2.2);
+addHedgeWall(-31, 0, 2.2, 64);
+addHedgeWall(31, 0, 2.2, 64);
 
-// KALAKERALA ARTS & SPORTS CLUB (CHELAKKADAVU) Wall Advertisements
+// Winding Hedge Labyrinth Walls (single path to centre fountain + dead-end hedge pockets)
+addHedgeWall(-10, 24, 18, 2.0);
+addHedgeWall(11, 24, 16, 2.0);
+addHedgeWall(-21, 15, 2.0, 18);
+addHedgeWall(-9, 15, 14, 2.0);
+addHedgeWall(12, 14, 14, 2.0);
+addHedgeWall(-11, 2, 14, 2.0);
+addHedgeWall(12, 1, 14, 2.0);
+addHedgeWall(-21, -10, 2.0, 22);
+addHedgeWall(21, -8, 2.0, 22);
+addHedgeWall(-12, -21, 16, 2.0);
+addHedgeWall(13, -22, 14, 2.0);
+addHedgeWall(0, -25, 2.0, 10);
+
+// Decorative Concentric Stone & Hedge Ring around Centre Fountain (x = 0, z = 0)
+const ringSegments = 16;
+const ringRadius = 11.5;
+for (let i = 0; i < ringSegments; i++) {
+  // Leave a narrow entry gap at South (i = 0)
+  if (i === 0) continue;
+  const angle = (i / ringSegments) * Math.PI * 2;
+  const sx = Math.sin(angle) * ringRadius;
+  const sz = Math.cos(angle) * ringRadius;
+  const seg = new THREE.Mesh(new THREE.BoxGeometry(4.4, 2.4, 1.4), hedgeMat);
+  seg.position.set(sx, 1.2, sz);
+  seg.rotation.y = angle;
+  seg.castShadow = true;
+  scene.add(seg);
+
+  const halfExt = 2.2;
+  wallColliders.push({
+    minX: sx - halfExt,
+    maxX: sx + halfExt,
+    minZ: sz - halfExt,
+    maxZ: sz + halfExt
+  });
+}
+
+// Centre Fountain (Final Goal Target at x = 0, z = 0)
+const fountainGroup = new THREE.Group();
+const outerBasin = new THREE.Mesh(
+  new THREE.CylinderGeometry(4.2, 4.5, 0.7, 32),
+  new THREE.MeshStandardMaterial({ color: 0xd8ccb8, roughness: 0.5 })
+);
+outerBasin.position.y = 0.35;
+
+const fountainWater = new THREE.Mesh(
+  new THREE.CylinderGeometry(3.6, 3.6, 0.5, 32),
+  new THREE.MeshStandardMaterial({
+    color: 0x1e90ff,
+    emissive: 0x0b3966,
+    roughness: 0.2,
+    metalness: 0.3
+  })
+);
+fountainWater.position.y = 0.42;
+
+const centerSpire = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.65, 1.1, 2.4, 20),
+  new THREE.MeshStandardMaterial({ color: 0xe6dcc8, roughness: 0.45 })
+);
+centerSpire.position.y = 1.2;
+
+const goalBeacon = new THREE.Mesh(
+  new THREE.TorusGeometry(1.4, 0.14, 14, 32),
+  new THREE.MeshStandardMaterial({
+    color: 0xffd166,
+    emissive: 0x996600,
+    metalness: 0.6,
+    roughness: 0.25
+  })
+);
+goalBeacon.position.y = 2.9;
+
+fountainGroup.add(outerBasin, fountainWater, centerSpire, goalBeacon);
+fountainGroup.position.set(0, 0, 0);
+scene.add(fountainGroup);
+
+// KALAKERALA ARTS & SPORTS CLUB — CHELAKKADAVU Wall Advertisements
 const texLoader = new THREE.TextureLoader();
-const logoTexture = texLoader.load("/logo.png", undefined, undefined, () => {
-  // Fallback canvas texture if /logo.png is not yet placed
-});
+const logoTexture = texLoader.load("/logo.png", undefined, undefined, () => {});
 
-function createClubAdBanner(x, y, z, rotY, width = 4.2, height = 2.1) {
+function addKalakeralaWallAd(x, z, rotY, width = 4.6, height = 2.2) {
   const canvas = document.createElement("canvas");
   canvas.width = 512;
   canvas.height = 256;
   const ctx = canvas.getContext("2d");
 
-  ctx.fillStyle = "#090c12";
+  ctx.fillStyle = "#080b10";
   ctx.fillRect(0, 0, 512, 256);
 
-  ctx.strokeStyle = "#d4af37";
+  ctx.strokeStyle = "#e5b94c";
   ctx.lineWidth = 8;
   ctx.strokeRect(10, 10, 492, 236);
 
-  ctx.fillStyle = "#f2c94c";
-  ctx.font = "bold 28px Arial, sans-serif";
+  ctx.fillStyle = "#f5c851";
+  ctx.font = "bold 27px Arial, sans-serif";
   ctx.textAlign = "center";
   ctx.fillText("KALAKERALA ARTS & SPORTS CLUB", 256, 78);
 
   ctx.fillStyle = "#ffffff";
   ctx.font = "bold 22px Arial, sans-serif";
-  ctx.fillText("CHELAKKADAVU  •  ESTD 1983", 256, 125);
+  ctx.fillText("CHELAKKADAVU  •  ESTD 1983", 256, 126);
 
-  ctx.fillStyle = "#9fb3c8";
+  ctx.fillStyle = "#a3b8cc";
   ctx.font = "18px Arial, sans-serif";
-  ctx.fillText("3D MAZE TREASURE HUNT CHALLENGE", 256, 175);
+  ctx.fillText("10-DOOR HEDGE MAZE CHALLENGE", 256, 178);
 
   const fallbackTex = new THREE.CanvasTexture(canvas);
-  const bannerMat = new THREE.MeshStandardMaterial({
-    map: fallbackTex,
-    roughness: 0.45
-  });
-
-  const banner = new THREE.Mesh(new THREE.PlaneGeometry(width, height), bannerMat);
-  banner.position.set(x, y, z);
-  banner.rotation.y = rotY;
-  scene.add(banner);
-
-  // If /logo.png exists, place a crisp circular/square emblem badge beside/over it
-  const badgeMat = new THREE.MeshBasicMaterial({
-    map: logoTexture,
-    transparent: true
-  });
-  const badge = new THREE.Mesh(new THREE.PlaneGeometry(1.15, 1.15), badgeMat);
-  const offsetDist = 0.03;
-  badge.position.set(
-    x + Math.sin(rotY) * offsetDist,
-    y + 0.1,
-    z + Math.cos(rotY) * offsetDist
+  const adPanel = new THREE.Mesh(
+    new THREE.PlaneGeometry(width, height),
+    new THREE.MeshStandardMaterial({ map: fallbackTex, roughness: 0.45 })
   );
-  badge.rotation.y = rotY;
-  badge.visible = false;
+  adPanel.position.set(x, 1.85, z);
+  adPanel.rotation.y = rotY;
+  scene.add(adPanel);
+
+  const emblem = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.15, 1.15),
+    new THREE.MeshBasicMaterial({ map: logoTexture, transparent: true })
+  );
+  emblem.position.set(
+    x + Math.sin(rotY) * 0.03,
+    1.95,
+    z + Math.cos(rotY) * 0.03
+  );
+  emblem.rotation.y = rotY;
+  emblem.visible = false;
   logoTexture.addEventListener("load", () => {
-    badge.visible = true;
+    emblem.visible = true;
   });
-  scene.add(badge);
+  scene.add(emblem);
 }
 
-// Place KALAKERALA club ads along left & right walls across the enlarged maze
-[-4, -26, -48, -70, -92, -114, -135].forEach((zAd, i) => {
-  if (i % 2 === 0) {
-    createClubAdBanner(-7.95, 1.75, zAd, Math.PI / 2, 4.4, 2.1);
-  } else {
-    createClubAdBanner(7.95, 1.75, zAd, -Math.PI / 2, 4.4, 2.1);
-  }
+addKalakeralaWallAd(-29.7, 14, Math.PI / 2);
+addKalakeralaWallAd(29.7, 14, -Math.PI / 2);
+addKalakeralaWallAd(-29.7, -14, Math.PI / 2);
+addKalakeralaWallAd(29.7, -14, -Math.PI / 2);
+addKalakeralaWallAd(0, -29.7, 0);
+
+// 10 Question Doors along the path to Centre Fountain
+const lockedDoorMat = new THREE.MeshStandardMaterial({
+  color: 0xd94848,
+  emissive: 0x3b0d0d,
+  roughness: 0.35,
+  metalness: 0.25
+});
+const unlockedDoorMat = new THREE.MeshStandardMaterial({
+  color: 0x2ea043,
+  emissive: 0x0d3616,
+  roughness: 0.35
 });
 
-// Build 12 Stages, Divider Walls, Fake Routes (detour/dead-end blocks), Real Keys & Fake Keys
-function buildKeyMesh(material, scale = 1) {
-  const group = new THREE.Group();
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.32 * scale, 0.09 * scale, 10, 20), material);
-  const stem = new THREE.Mesh(new THREE.BoxGeometry(0.14 * scale, 0.52 * scale, 0.14 * scale), material);
-  stem.position.y = -0.42 * scale;
-  group.add(ring, stem);
-  return group;
-}
+const doorObjects = DOOR_WAYPOINTS.map((wp, idx) => {
+  const doorGroup = new THREE.Group();
 
-TREASURE_STAGES.forEach((stageData, idx) => {
-  const zDoor = stageData.doorZ;
-  const zoneMidZ = zDoor + 4.2;
+  // Left & right stone pillars framing the door
+  const pillarGeo = new THREE.BoxGeometry(0.45, 3.2, 0.65);
+  const pillarMat = new THREE.MeshStandardMaterial({ color: 0x8d99ae, roughness: 0.6 });
+  const leftPillar = new THREE.Mesh(pillarGeo, pillarMat);
+  leftPillar.position.set(-1.65, 1.6, 0);
+  const rightPillar = new THREE.Mesh(pillarGeo, pillarMat);
+  rightPillar.position.set(1.65, 1.6, 0);
 
-  // Partition wall at doorZ with central gate (x from -1.5 to +1.5)
-  addWall(-5.0, 1.6, zDoor, 6.0, 3.2, 0.9);
-  addWall(5.0, 1.6, zDoor, 6.0, 3.2, 0.9);
-
-  const doorMesh = new THREE.Mesh(
-    new THREE.BoxGeometry(3.0, 3.0, 0.45),
+  const leafMesh = new THREE.Mesh(
+    new THREE.BoxGeometry(2.85, 2.9, 0.35),
     lockedDoorMat.clone()
   );
-  doorMesh.position.set(0, 1.5, zDoor);
-  scene.add(doorMesh);
+  leafMesh.position.set(0, 1.45, 0);
+  leafMesh.castShadow = true;
 
-  doorObjects.push({
+  doorGroup.add(leftPillar, rightPillar, leafMesh);
+  doorGroup.position.set(wp.x, 0, wp.z);
+  doorGroup.rotation.y = wp.rotY;
+  scene.add(doorGroup);
+
+  return {
     index: idx,
-    z: zDoor,
-    mesh: doorMesh,
+    x: wp.x,
+    z: wp.z,
+    rotY: wp.rotY,
+    group: doorGroup,
+    leafMesh,
     unlocked: false
-  });
-
-  // Fake route maze pillars creating winding corridors & dead-end pockets
-  const pillarX = idx % 2 === 0 ? -2.3 : 2.3;
-  addWall(pillarX, 1.4, zoneMidZ + 1.4, 2.2, 2.8, 1.4, true);
-  addWall(-pillarX, 1.4, zoneMidZ - 1.2, 2.2, 2.8, 1.4, true);
-
-  // Real Key
-  const realKeyGroup = buildKeyMesh(realKeyMat, 1.05);
-  realKeyGroup.position.set(stageData.keyPos.x, 1.25, stageData.keyPos.z);
-  scene.add(realKeyGroup);
-
-  realKeyObjects.push({
-    index: idx,
-    x: stageData.keyPos.x,
-    z: stageData.keyPos.z,
-    mesh: realKeyGroup,
-    collected: false
-  });
-
-  // Fake Keys (decoys)
-  (stageData.fakeKeys || []).forEach((fk) => {
-    const fakeGroup = buildKeyMesh(fakeKeyMat, 0.95);
-    fakeGroup.position.set(fk.x, 1.2, fk.z);
-    scene.add(fakeGroup);
-
-    fakeKeyObjects.push({
-      stageIndex: idx,
-      x: fk.x,
-      z: fk.z,
-      mesh: fakeGroup
-    });
-  });
+  };
 });
 
-// Final Exit Zone at z = -139
-const goalMesh = new THREE.Mesh(
-  new THREE.CylinderGeometry(2.0, 2.0, 0.3, 28),
-  new THREE.MeshStandardMaterial({ color: 0xffd166, emissive: 0x775200 })
-);
-goalMesh.position.set(0, 0.15, -139);
-scene.add(goalMesh);
-
-const playerPos = new THREE.Vector3(0, 1.6, 6);
+// Player state
+const playerPos = new THREE.Vector3(0, 1.6, 35);
 const PLAYER_RADIUS = 0.55;
 
-function syncWorldWithSession() {
-  realKeyObjects.forEach((k, idx) => {
-    const collected = Boolean(sessionState.collectedKeys[idx]);
-    k.collected = collected;
-    k.mesh.visible = !collected;
-  });
-
+function syncMazeWithSession() {
   doorObjects.forEach((d, idx) => {
-    const unlocked = Boolean(sessionState.unlockedDoors[idx]);
-    d.unlocked = unlocked;
-    d.mesh.position.y = unlocked ? -2.4 : 1.5;
-    d.mesh.material.color.setHex(unlocked ? 0x2ea043 : 0xd94848);
+    const isUnlocked = Boolean(sessionState.unlockedDoors[idx]);
+    d.unlocked = isUnlocked;
+    d.leafMesh.position.y = isUnlocked ? -2.5 : 1.45;
+    d.leafMesh.material.color.setHex(isUnlocked ? 0x2ea043 : 0xd94848);
   });
 
-  const startZ = sessionState.currentStageIndex > 0
-    ? TREASURE_STAGES[Math.min(sessionState.currentStageIndex - 1, TOTAL_STAGES - 1)].doorZ - 2.4
-    : 6;
+  if (sessionState.currentDoorIndex > 0) {
+    const lastUnlocked = doorObjects[Math.min(sessionState.currentDoorIndex - 1, TOTAL_DOORS - 1)];
+    playerPos.set(lastUnlocked.x, 1.6, lastUnlocked.z - 2.2);
+  } else {
+    playerPos.set(0, 1.6, 35);
+  }
 
-  playerPos.set(0, 1.6, startZ);
   camera.position.copy(playerPos);
-  camera.lookAt(0, 1.5, startZ - 12);
+  camera.lookAt(playerPos.x, 1.5, playerPos.z - 10);
 }
 
 function collidesWithWall(x, z) {
@@ -699,50 +773,61 @@ function collidesWithWall(x, z) {
   return false;
 }
 
-async function checkKeysAndDoors(dt) {
-  if (sessionState.fakeKeyCooldown > 0) {
-    sessionState.fakeKeyCooldown = Math.max(0, sessionState.fakeKeyCooldown - dt);
+function openDoorQuestionModal(doorIndex) {
+  if (!sessionState.active || sessionState.finished) return;
+  if (sessionState.activeQuestionDoorIndex !== null) return;
+  if (doorIndex !== sessionState.currentDoorIndex) return;
+
+  const qData = DOOR_QUESTIONS[doorIndex];
+  if (!qData) return;
+
+  sessionState.activeQuestionDoorIndex = doorIndex;
+  keys.forward = keys.backward = keys.left = keys.right = false;
+
+  if (dqBadge) dqBadge.textContent = `DOOR ${qData.door} / ${TOTAL_DOORS} • ${qData.category}`;
+  if (dqQuestion) dqQuestion.textContent = qData.question;
+  if (dqFeedback) dqFeedback.textContent = "";
+  if (dqInput) {
+    dqInput.value = "";
+    setTimeout(() => dqInput.focus(), 50);
   }
+  questionModal.style.display = "flex";
+}
 
-  const activeStage = sessionState.currentStageIndex;
-  if (activeStage < realKeyObjects.length) {
-    const targetKey = realKeyObjects[activeStage];
-    if (!targetKey.collected) {
-      const dx = playerPos.x - targetKey.x;
-      const dz = playerPos.z - targetKey.z;
-      if (dx * dx + dz * dz <= 1.3 * 1.3) {
-        targetKey.collected = true;
-        targetKey.mesh.visible = false;
-        sessionState.collectedKeys[activeStage] = true;
-        playTone(680, "triangle", 0.2);
+function closeDoorQuestionModal() {
+  sessionState.activeQuestionDoorIndex = null;
+  questionModal.style.display = "none";
+  // Step slightly back so player does not immediately re-trigger modal on close
+  playerPos.z += 1.1;
+}
 
-        const door = doorObjects[activeStage];
-        door.unlocked = true;
-        door.mesh.position.y = -2.4;
-        door.mesh.material.color.setHex(0x2ea043);
-        sessionState.unlockedDoors[activeStage] = true;
-        sessionState.currentStageIndex = activeStage + 1;
+async function submitDoorAnswer() {
+  const idx = sessionState.activeQuestionDoorIndex;
+  if (idx === null) return;
 
-        updateHudAndClue();
-        showToast(`✅ ശരിയായ Key ${activeStage + 1} ലഭിച്ചു! Door ${activeStage + 1} തുറന്നു!`);
-        await saveProgressToServer(false);
-      }
-    }
+  const qData = DOOR_QUESTIONS[idx];
+  const userAns = String(dqInput?.value || "").trim().toUpperCase();
+  const expectedAns = String(qData.answer || "").trim().toUpperCase();
 
-    // Check fake keys in active stage
-    if (sessionState.fakeKeyCooldown === 0) {
-      for (const fk of fakeKeyObjects) {
-        if (fk.stageIndex !== activeStage) continue;
-        const dx = playerPos.x - fk.x;
-        const dz = playerPos.z - fk.z;
-        if (dx * dx + dz * dz <= 1.15 * 1.15) {
-          sessionState.fakeKeyCooldown = 2.0;
-          sessionState.startTimeMs -= 3000; // +3s penalty for touching fake key
-          playTone(220, "sawtooth", 0.22);
-          showToast("❌ Fake Key! വ്യാജ കീ ആണ് (+3s പെനാൽറ്റി). ക്ലൂ കൃത്യമായി വായിക്കുക!", "#ff6b6b");
-          break;
-        }
-      }
+  if (userAns === expectedAns) {
+    const door = doorObjects[idx];
+    door.unlocked = true;
+    door.leafMesh.position.y = -2.5;
+    door.leafMesh.material.color.setHex(0x2ea043);
+
+    sessionState.unlockedDoors[idx] = true;
+    sessionState.currentDoorIndex = idx + 1;
+    sessionState.activeQuestionDoorIndex = null;
+    questionModal.style.display = "none";
+
+    updateHudDoor();
+    playDoorSound(true);
+    showInfoBanner(`🔓 Door ${idx + 1} തുറന്നു! മുന്നോട്ട് പോകുക.`);
+    await saveProgressToServer(false);
+  } else {
+    playDoorSound(false);
+    if (dqFeedback) {
+      dqFeedback.textContent = "ഉത്തരം ശരിയല്ല. വീണ്ടും ശ്രമിക്കുക!";
     }
   }
 }
@@ -750,12 +835,11 @@ async function checkKeysAndDoors(dt) {
 function collidesWithLockedDoor(x, z) {
   for (const d of doorObjects) {
     if (d.unlocked) continue;
-    const closestX = Math.max(-1.5, Math.min(x, 1.5));
-    const closestZ = Math.max(d.z - 0.35, Math.min(z, d.z + 0.35));
-    const dx = x - closestX;
-    const dz = z - closestZ;
-    if (dx * dx + dz * dz < PLAYER_RADIUS * PLAYER_RADIUS) {
-      showToast(`🔒 Door ${d.index + 1} ലോക്ക് ആണ്! മുകളിലെ Clue വായിച്ച് ശരിയായ Key എടുക്കുക.`, "#ff9f43");
+    const dx = x - d.x;
+    const dz = z - d.z;
+    const dist = Math.hypot(dx, dz);
+    if (dist < 1.85) {
+      openDoorQuestionModal(d.index);
       return true;
     }
   }
@@ -763,21 +847,22 @@ function collidesWithLockedDoor(x, z) {
 }
 
 // ==========================================
-// 7. WIN & GOOGLE FORM SUBMISSION
+// 7. CENTRE FOUNTAIN VICTORY & SUBMISSION
 // ==========================================
-async function handleGameWin() {
+async function handleReachCentreFountain() {
   if (sessionState.finished) return;
   sessionState.finished = true;
   sessionState.active = false;
-  clueBanner.style.display = "none";
+  infoBanner.style.display = "none";
   clearSessionId();
+  playDoorSound(true);
 
   const finalTime = sessionState.elapsedSeconds.toFixed(2);
   await saveProgressToServer(true);
 
   if (UI.hud) UI.hud.style.display = "none";
   if (UI.winSummary) {
-    UI.winSummary.textContent = `അഭിനന്ദനങ്ങൾ ${sessionState.playerName}! എല്ലാ 12 വാതിലുകളും കടന്ന് ഫിനിഷ് ചെയ്ത സമയം: ${finalTime}s`;
+    UI.winSummary.textContent = `അഭിനന്ദനങ്ങൾ ${sessionState.playerName}! 10 വാതിലുകളും കടന്ന് Centre Fountain-ൽ എത്തിയ സമയം: ${finalTime}s`;
   }
   if (UI.winModal) UI.winModal.style.display = "flex";
 
@@ -805,7 +890,7 @@ async function handleGameWin() {
 }
 
 // ==========================================
-// 8. CONTROLS & SESSION RESUME HOOKS
+// 8. CONTROLS & SESSION RESUME
 // ==========================================
 window.addEventListener("beforeunload", (e) => {
   if (sessionState.active && !sessionState.finished) {
@@ -822,6 +907,15 @@ window.addEventListener("pageshow", () => {
 });
 
 window.addEventListener("keydown", (e) => {
+  if (sessionState.activeQuestionDoorIndex !== null) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      submitDoorAnswer();
+    } else if (e.key === "Escape") {
+      closeDoorQuestionModal();
+    }
+    return;
+  }
   if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") keys.forward = true;
   if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") keys.backward = true;
   if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") keys.left = true;
@@ -852,6 +946,17 @@ bindTouchBtn(UI.btnLeft, "left");
 bindTouchBtn(UI.btnRight, "right");
 
 if (UI.startBtn) UI.startBtn.addEventListener("click", handleStartGame);
+if (dqSubmitBtn) dqSubmitBtn.addEventListener("click", submitDoorAnswer);
+if (dqBackBtn) dqBackBtn.addEventListener("click", closeDoorQuestionModal);
+if (dqInput) {
+  dqInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      submitDoorAnswer();
+    }
+  });
+}
+
 if (UI.playAgainBtn) {
   UI.playAgainBtn.addEventListener("click", () => {
     clearSessionId();
@@ -881,42 +986,39 @@ function animate(now) {
       UI.hudTimer.textContent = `Time: ${sessionState.elapsedSeconds.toFixed(1)}s`;
     }
 
-    const moveSpeed = 7.2 * dt;
-    let moveX = 0;
-    let moveZ = 0;
+    if (sessionState.activeQuestionDoorIndex === null) {
+      const moveSpeed = 7.4 * dt;
+      let moveX = 0;
+      let moveZ = 0;
 
-    if (keys.forward) moveZ -= moveSpeed;
-    if (keys.backward) moveZ += moveSpeed;
-    if (keys.left) moveX -= moveSpeed;
-    if (keys.right) moveX += moveSpeed;
+      if (keys.forward) moveZ -= moveSpeed;
+      if (keys.backward) moveZ += moveSpeed;
+      if (keys.left) moveX -= moveSpeed;
+      if (keys.right) moveX += moveSpeed;
 
-    const nextX = playerPos.x + moveX;
-    if (!collidesWithWall(nextX, playerPos.z) && !collidesWithLockedDoor(nextX, playerPos.z)) {
-      playerPos.x = nextX;
-    }
+      const nextX = playerPos.x + moveX;
+      if (!collidesWithWall(nextX, playerPos.z) && !collidesWithLockedDoor(nextX, playerPos.z)) {
+        playerPos.x = nextX;
+      }
 
-    const nextZ = playerPos.z + moveZ;
-    if (!collidesWithWall(playerPos.x, nextZ) && !collidesWithLockedDoor(playerPos.x, nextZ)) {
-      playerPos.z = nextZ;
-    }
+      const nextZ = playerPos.z + moveZ;
+      if (!collidesWithWall(playerPos.x, nextZ) && !collidesWithLockedDoor(playerPos.x, nextZ)) {
+        playerPos.z = nextZ;
+      }
 
-    checkKeysAndDoors(dt);
+      camera.position.set(playerPos.x, playerPos.y, playerPos.z);
+      camera.lookAt(playerPos.x, playerPos.y - 0.1, playerPos.z - 9);
 
-    camera.position.set(playerPos.x, playerPos.y, playerPos.z);
-    camera.lookAt(playerPos.x, playerPos.y - 0.1, playerPos.z - 9);
-
-    if (playerPos.z <= -137.8) {
-      handleGameWin();
+      // Reach Centre Fountain at (0, 0) once all 10 doors are unlocked
+      const distToFountain = Math.hypot(playerPos.x - 0, playerPos.z - 0);
+      if (sessionState.currentDoorIndex >= TOTAL_DOORS && distToFountain <= 4.6) {
+        handleReachCentreFountain();
+      }
     }
   }
 
-  realKeyObjects.forEach((k) => {
-    if (!k.collected) k.mesh.rotation.y += 2.4 * dt;
-  });
-  fakeKeyObjects.forEach((fk) => {
-    fk.mesh.rotation.y -= 2.8 * dt;
-  });
-  goalMesh.rotation.y += 1.6 * dt;
+  goalBeacon.rotation.z += 1.8 * dt;
+  goalBeacon.rotation.x += 0.9 * dt;
   renderer.render(scene, camera);
 }
 
