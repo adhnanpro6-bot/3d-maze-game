@@ -5,6 +5,8 @@ const VERIFY_ENDPOINT = "/api/verify-code";
 const RESUME_ENDPOINT = "/api/resume-session";
 const PROGRESS_ENDPOINT = "/api/save-progress";
 
+const TOTAL_STAGES = 12;
+
 const GOOGLE_FORM_CONFIG = {
   enabled: false,
   formResponseUrl: "https://docs.google.com/forms/d/e/YOUR_FORM_ID/formResponse",
@@ -15,42 +17,109 @@ const GOOGLE_FORM_CONFIG = {
   }
 };
 
-// 5 Treasure Hunt Zones: Clue -> Find Key in Zone -> Unlock Door
+// 12 Stages with Maths, GK, and Sports Clues + Fake Keys + Fake Routes
+// Left lane x ≈ -5.2 | Center x ≈ 0 | Right lane x ≈ +5.2
 const TREASURE_STAGES = [
   {
     stage: 1,
-    doorZ: -8,
-    clue: "Clue 1: ആദ്യ വാതിലിന്റെ കീ ഇടതുവശത്തെ (West / Left) ഇടനാഴിയിൽ ഒളിഞ്ഞിരിപ്പുണ്ട്.",
-    keyPos: { x: -3.6, z: -4.2 }
+    category: "MATHS CLUE",
+    doorZ: -10,
+    clue: "🔢 Maths Clue 1: (18 ÷ 3) + 2 = 8 (Even). ഇരട്ട സംഖ്യ ഇടതുവശത്തെ (LEFT) ഇടനാഴിയിൽ കീ തിരയുക!",
+    keyPos: { x: -5.2, z: -6.5 },
+    fakeKeys: [{ x: 5.2, z: -6.5 }]
   },
   {
     stage: 2,
-    doorZ: -18,
-    clue: "Clue 2: രണ്ടാം വാതിലിന്റെ കീ വലതുവശത്തെ (East / Right) മൂലയിലാണ്.",
-    keyPos: { x: 3.6, z: -13.5 }
+    category: "SPORTS CLUE",
+    doorZ: -21,
+    clue: "⚽ Sports Clue 2: ഒരു ഫുട്ബോൾ ടീമിൽ 11 കളിക്കാർ (Odd). ഒറ്റസംഖ്യ വലതുവശത്തെ (RIGHT) ഭാഗത്ത് കീ ഉണ്ട്!",
+    keyPos: { x: 5.2, z: -17.0 },
+    fakeKeys: [{ x: -5.2, z: -16.5 }, { x: 0, z: -14.5 }]
   },
   {
     stage: 3,
-    doorZ: -28,
-    clue: "Clue 3: മൂന്നാം വാതിലിന്റെ കീ ഇടതുവശത്തെ ചുവരിനരികിൽ നേരെ മുന്നോട്ട് പോയാൽ കാണാം.",
-    keyPos: { x: -3.8, z: -24.5 }
+    category: "GK CLUE",
+    doorZ: -32,
+    clue: "🌍 GK Clue 3: കേരളത്തിൽ 14 ജില്ലകൾ (Even). ഇടതുവശത്തെ (LEFT) മറവിൽ കീ ഒളിഞ്ഞിരിപ്പുണ്ട്.",
+    keyPos: { x: -5.2, z: -27.5 },
+    fakeKeys: [{ x: 5.2, z: -27.5 }]
   },
   {
     stage: 4,
-    doorZ: -38,
-    clue: "Clue 4: നാലാം വാതിലിന്റെ കീ വലതുവശത്തെ (Right) ഭാഗത്ത് വാതിലിന് തൊട്ടുമുമ്പിലുണ്ട്.",
-    keyPos: { x: 3.5, z: -34.0 }
+    category: "MATHS CLUE",
+    doorZ: -43,
+    clue: "🔢 Maths Clue 4: 9 × 3 = 27 (Odd). വലതുവശത്തെ (RIGHT) ശാഖയിൽ കീ കണ്ടെത്തുക!",
+    keyPos: { x: 5.2, z: -38.5 },
+    fakeKeys: [{ x: -5.2, z: -38.5 }, { x: -5.2, z: -35.5 }]
   },
   {
     stage: 5,
-    doorZ: -48,
-    clue: "Clue 5: അവസാന വാതിലിന്റെ (Vault) കീ ഇടതുവശത്തെ (Left) മറവിൽ തിളങ്ങുന്നുണ്ട്!",
-    keyPos: { x: -3.7, z: -44.0 }
+    category: "SPORTS CLUE",
+    doorZ: -54,
+    clue: "🏆 Sports Clue 5: FIFA ലോകകപ്പ് 4 വർഷത്തിലൊരിക്കൽ (Even). ഇടതുവശത്തെ (LEFT) ചുവരിനരികിൽ കീ തിരയുക!",
+    keyPos: { x: -5.2, z: -49.0 },
+    fakeKeys: [{ x: 5.2, z: -49.0 }]
+  },
+  {
+    stage: 6,
+    category: "GK CLUE",
+    doorZ: -65,
+    clue: "🌍 GK Clue 6: ലോകത്തിലെ ഏറ്റവും വലിയ ഭൂഖണ്ഡം ഏഷ്യ (1). 1 = വലതുവശം (RIGHT) — അവിടെ കീ ഉണ്ട്!",
+    keyPos: { x: 5.2, z: -60.0 },
+    fakeKeys: [{ x: -5.2, z: -60.0 }, { x: 0, z: -58.0 }]
+  },
+  {
+    stage: 7,
+    category: "MATHS CLUE",
+    doorZ: -76,
+    clue: "🔢 Maths Clue 7: 100 - 64 = 36 (Even). ഇടതുവശത്തെ (LEFT) ഇടനാഴിയിലേക്ക് തിരിയുക!",
+    keyPos: { x: -5.2, z: -71.0 },
+    fakeKeys: [{ x: 5.2, z: -71.0 }, { x: 5.2, z: -68.5 }]
+  },
+  {
+    stage: 8,
+    category: "SPORTS CLUE",
+    doorZ: -87,
+    clue: "🏏 Sports Clue 8: ക്രിക്കറ്റ് ടെസ്റ്റ് ഇന്നിംഗ്സ്/ടീം ഘടനയിൽ 11 (Odd). വലതുവശത്തെ (RIGHT) മൂലയിൽ കീ ഉണ്ട്!",
+    keyPos: { x: 5.2, z: -82.0 },
+    fakeKeys: [{ x: -5.2, z: -82.0 }]
+  },
+  {
+    stage: 9,
+    category: "GK CLUE",
+    doorZ: -98,
+    clue: "🌍 GK Clue 9: സൂര്യയൂഥത്തിലെ ഏറ്റവും വലിയ ഗ്രഹം വ്യാഴം (Jupiter — J = Left/Even). ഇടതുവശത്തെ (LEFT) ഭാഗത്ത് കീ തിരയുക!",
+    keyPos: { x: -5.2, z: -93.0 },
+    fakeKeys: [{ x: 5.2, z: -93.0 }, { x: 0, z: -91.0 }]
+  },
+  {
+    stage: 10,
+    category: "MATHS CLUE",
+    doorZ: -109,
+    clue: "🔢 Maths Clue 10: 15 × 3 = 45 (Odd). വലതുവശത്തെ (RIGHT) ഭാഗത്ത് കീ ഒളിപ്പിച്ചിട്ടുണ്ട്!",
+    keyPos: { x: 5.2, z: -104.0 },
+    fakeKeys: [{ x: -5.2, z: -104.0 }, { x: -5.2, z: -101.5 }]
+  },
+  {
+    stage: 11,
+    category: "SPORTS CLUE",
+    doorZ: -120,
+    clue: "🏅 Sports Clue 11: ഒളിമ്പിക് റിംഗുകൾ 5 എണ്ണം (Odd -> Right). വലതുവശത്തെ (RIGHT) ഇടനാഴിയിൽ കീ കണ്ടെത്തുക!",
+    keyPos: { x: 5.2, z: -115.0 },
+    fakeKeys: [{ x: -5.2, z: -115.0 }]
+  },
+  {
+    stage: 12,
+    category: "GK CLUE (FINAL)",
+    doorZ: -131,
+    clue: "🔥 Final GK Clue 12: ഇന്ത്യയുടെ ഭരണഘടന നിലവിൽ വന്ന വർഷം 1950 (Even -> Left). അവസാന കീ ഇടതുവശത്ത് (LEFT)!",
+    keyPos: { x: -5.2, z: -126.0 },
+    fakeKeys: [{ x: 5.2, z: -126.0 }, { x: 0, z: -124.0 }]
   }
 ];
 
 // ==========================================
-// 2. DOM ELEMENTS
+// 2. DOM ELEMENTS & BANNERS
 // ==========================================
 const UI = {
   accessScreen: document.getElementById("access-screen"),
@@ -76,7 +145,6 @@ const UI = {
   btnRight: document.getElementById("btn-right")
 };
 
-// Clue & Status Banner created dynamically inside HUD/Body so no HTML changes needed
 const clueBanner = document.createElement("div");
 clueBanner.id = "treasure-clue-banner";
 clueBanner.style.cssText = [
@@ -85,17 +153,17 @@ clueBanner.style.cssText = [
   "left: 50%",
   "transform: translateX(-50%)",
   "z-index: 25",
-  "max-width: 92vw",
+  "max-width: 94vw",
   "padding: 10px 16px",
   "border-radius: 10px",
-  "background: rgba(12, 20, 38, 0.9)",
-  "border: 1px solid rgba(255, 209, 102, 0.65)",
+  "background: rgba(10, 17, 34, 0.92)",
+  "border: 1px solid rgba(255, 209, 102, 0.75)",
   "color: #ffd166",
-  "font-size: 14px",
+  "font-size: 13.5px",
   "font-weight: 600",
   "text-align: center",
   "display: none",
-  "box-shadow: 0 6px 20px rgba(0,0,0,0.45)"
+  "box-shadow: 0 6px 22px rgba(0,0,0,0.5)"
 ].join(";");
 document.body.appendChild(clueBanner);
 
@@ -103,15 +171,18 @@ const toastBanner = document.createElement("div");
 toastBanner.id = "treasure-toast";
 toastBanner.style.cssText = [
   "position: fixed",
-  "bottom: 115px",
+  "bottom: 118px",
   "left: 50%",
   "transform: translateX(-50%)",
   "z-index: 25",
+  "max-width: 92vw",
   "padding: 8px 14px",
   "border-radius: 8px",
-  "background: rgba(20, 35, 60, 0.92)",
+  "background: rgba(18, 28, 48, 0.94)",
+  "border: 1px solid rgba(255,255,255,0.15)",
   "color: #7ee787",
   "font-size: 13px",
+  "text-align: center",
   "display: none"
 ].join(";");
 document.body.appendChild(toastBanner);
@@ -124,48 +195,52 @@ function showToast(msg, color = "#7ee787") {
   clearTimeout(toastTimeout);
   toastTimeout = setTimeout(() => {
     toastBanner.style.display = "none";
-  }, 2200);
+  }, 2400);
 }
 
 // ==========================================
-// 3. SOUND EFFECT (Web Audio API)
+// 3. SOUND EFFECTS (Web Audio API)
 // ==========================================
 let audioCtx = null;
-function playPickupSound(freq = 660) {
+function playTone(freq = 640, type = "triangle", duration = 0.18) {
   try {
     if (!audioCtx) {
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      audioCtx = new AudioContextClass();
+      const AC = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AC();
     }
     if (audioCtx.state === "suspended") audioCtx.resume();
 
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
-    osc.type = "triangle";
+    osc.type = type;
     osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(freq * 1.45, audioCtx.currentTime + 0.16);
+    osc.frequency.exponentialRampToValueAtTime(
+      type === "sawtooth" ? freq * 0.55 : freq * 1.45,
+      audioCtx.currentTime + duration
+    );
 
     gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.18);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration + 0.02);
 
     osc.connect(gain);
     gain.connect(audioCtx.destination);
     osc.start();
-    osc.stop(audioCtx.currentTime + 0.19);
+    osc.stop(audioCtx.currentTime + duration + 0.03);
   } catch (_) {}
 }
 
 // ==========================================
-// 4. GAME STATE
+// 4. GAME STATE (No localStorage)
 // ==========================================
 let sessionState = {
   active: false,
   sessionId: "",
   playerName: "",
   accessCode: "",
-  currentStageIndex: 0, // 0..4
-  collectedKeys: [false, false, false, false, false],
-  unlockedDoors: [false, false, false, false, false],
+  currentStageIndex: 0, // 0..11
+  collectedKeys: Array(TOTAL_STAGES).fill(false),
+  unlockedDoors: Array(TOTAL_STAGES).fill(false),
+  fakeKeyCooldown: 0,
   startTimeMs: 0,
   elapsedSeconds: 0,
   finished: false
@@ -253,7 +328,7 @@ async function tryResumeExistingSession() {
   const existingId = readPersistedSessionId();
   if (!existingId) return false;
 
-  setLoginStatus("പഴയ Treasure Hunt സെഷൻ തുടരുന്നു...", false);
+  setLoginStatus("പഴയ 12-Door Treasure Hunt സെഷൻ തുടരുന്നു...", false);
   try {
     const response = await fetch(RESUME_ENDPOINT, {
       method: "POST",
@@ -328,7 +403,7 @@ function setLoginStatus(msg, isError) {
 function updateHudAndClue() {
   const idx = sessionState.currentStageIndex;
   if (UI.hudDoor) {
-    UI.hudDoor.textContent = `Stage: ${Math.min(idx + 1, 5)} / 5`;
+    UI.hudDoor.textContent = `Door: ${Math.min(idx + 1, TOTAL_STAGES)} / ${TOTAL_STAGES}`;
   }
 
   if (idx < TREASURE_STAGES.length) {
@@ -336,16 +411,16 @@ function updateHudAndClue() {
     const hasKey = sessionState.collectedKeys[idx];
     clueBanner.style.display = "block";
     clueBanner.textContent = hasKey
-      ? `🔑 Key ${idx + 1} ലഭിച്ചു! മുന്നോട്ടുള്ള വാതിൽ (Door ${idx + 1}) കടന്ന് അടുത്ത സോണിലേക്ക് പോകുക.`
+      ? `🔑 Key ${idx + 1} ലഭിച്ചു! Door ${idx + 1} കടന്ന് അടുത്ത സോണിലേക്ക് നീങ്ങുക.`
       : stageInfo.clue;
   } else {
     clueBanner.style.display = "block";
-    clueBanner.textContent = "🏆 എല്ലാ കീകളും വാതിലുകളും പൂർത്തിയായി! മുന്നിലുള്ള ഗോൾഡൻ എക്സിറ്റിലേക്ക് ഓടുക!";
+    clueBanner.textContent = "🏆 12 വാതിലുകളും പൂർത്തിയായി! മുന്നിലുള്ള ഗോൾഡൻ ഫിനിഷ് സോണിലേക്ക് ഓടുക!";
   }
 }
 
 function startSession({ sessionId, playerName, accessCode, doorIndex, elapsedSeconds }) {
-  const safeIdx = Math.max(0, Math.min(doorIndex, 5));
+  const safeIdx = Math.max(0, Math.min(doorIndex, TOTAL_STAGES));
 
   sessionState = {
     active: true,
@@ -353,8 +428,9 @@ function startSession({ sessionId, playerName, accessCode, doorIndex, elapsedSec
     playerName,
     accessCode,
     currentStageIndex: safeIdx,
-    collectedKeys: [false, false, false, false, false].map((_, i) => i < safeIdx),
-    unlockedDoors: [false, false, false, false, false].map((_, i) => i < safeIdx),
+    collectedKeys: Array(TOTAL_STAGES).fill(false).map((_, i) => i < safeIdx),
+    unlockedDoors: Array(TOTAL_STAGES).fill(false).map((_, i) => i < safeIdx),
+    fakeKeyCooldown: 0,
     startTimeMs: performance.now() - elapsedSeconds * 1000,
     elapsedSeconds,
     finished: false
@@ -371,50 +447,59 @@ function startSession({ sessionId, playerName, accessCode, doorIndex, elapsedSec
 }
 
 // ==========================================
-// 6. THREE.JS 3D TREASURE MAZE, KEYS & DOORS
+// 6. ENLARGED 3D MAZE, FAKE ROUTES, FAKE KEYS & KALAKERALA WALL ADS
 // ==========================================
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x090e1a);
-scene.fog = new THREE.Fog(0x090e1a, 12, 38);
+scene.background = new THREE.Color(0x070b14);
+scene.fog = new THREE.Fog(0x070b14, 14, 46);
 
-const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 100);
+const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.1, 140);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 UI.canvasContainer.appendChild(renderer.domElement);
 
-scene.add(new THREE.AmbientLight(0xffffff, 0.75));
-const dirLight = new THREE.DirectionalLight(0xffffff, 0.95);
-dirLight.position.set(8, 18, 12);
+scene.add(new THREE.AmbientLight(0xffffff, 0.78));
+const dirLight = new THREE.DirectionalLight(0xfff4d6, 1.0);
+dirLight.position.set(12, 24, 15);
 scene.add(dirLight);
 
+// Enlarged Maze Floor (-144 to +10 along Z, width 22)
+const mazeCenterZ = -67;
+const mazeLengthZ = 156;
 const floor = new THREE.Mesh(
-  new THREE.PlaneGeometry(20, 68),
-  new THREE.MeshStandardMaterial({ color: 0x131d33, roughness: 0.85 })
+  new THREE.PlaneGeometry(24, mazeLengthZ),
+  new THREE.MeshStandardMaterial({ color: 0x111a2e, roughness: 0.85 })
 );
 floor.rotation.x = -Math.PI / 2;
-floor.position.set(0, 0, -25);
+floor.position.set(0, 0, mazeCenterZ);
 scene.add(floor);
 
-const wallMat = new THREE.MeshStandardMaterial({ color: 0x26385e, roughness: 0.6 });
-const obstacleWallMat = new THREE.MeshStandardMaterial({ color: 0x1e2d4d, roughness: 0.65 });
+const wallMat = new THREE.MeshStandardMaterial({ color: 0x24365c, roughness: 0.6 });
+const fakeRouteWallMat = new THREE.MeshStandardMaterial({ color: 0x1a2744, roughness: 0.7 });
 const lockedDoorMat = new THREE.MeshStandardMaterial({ color: 0xd94848, roughness: 0.4 });
-const unlockedDoorMat = new THREE.MeshStandardMaterial({ color: 0x2ea043, roughness: 0.4 });
-const keyMat = new THREE.MeshStandardMaterial({
+const realKeyMat = new THREE.MeshStandardMaterial({
   color: 0xffd166,
   emissive: 0x8a5a00,
-  metalness: 0.5,
+  metalness: 0.55,
   roughness: 0.25
+});
+const fakeKeyMat = new THREE.MeshStandardMaterial({
+  color: 0x4ea8de,
+  emissive: 0x113a5c,
+  metalness: 0.4,
+  roughness: 0.35
 });
 
 const wallColliders = [];
 const doorObjects = [];
-const keyObjects = [];
+const realKeyObjects = [];
+const fakeKeyObjects = [];
 
-function addWall(x, y, z, w, h, d, isObstacle = false) {
+function addWall(x, y, z, w, h, d, isFakeRoute = false) {
   const mesh = new THREE.Mesh(
     new THREE.BoxGeometry(w, h, d),
-    isObstacle ? obstacleWallMat : wallMat
+    isFakeRoute ? fakeRouteWallMat : wallMat
   );
   mesh.position.set(x, y, z);
   scene.add(mesh);
@@ -426,70 +511,162 @@ function addWall(x, y, z, w, h, d, isObstacle = false) {
   });
 }
 
-// Outer boundaries
-addWall(-5.5, 1.5, -25, 1, 3, 68);
-addWall(5.5, 1.5, -25, 1, 3, 68);
-addWall(0, 1.5, 8, 12, 3, 1);
+// Outer maze boundary walls (x = -8.5 and +8.5, total playable width ~16)
+addWall(-8.5, 1.6, mazeCenterZ, 1, 3.2, mazeLengthZ);
+addWall(8.5, 1.6, mazeCenterZ, 1, 3.2, mazeLengthZ);
+addWall(0, 1.6, 10, 18, 3.2, 1);
+addWall(0, 1.6, -144, 18, 3.2, 1);
 
-// Maze cover obstacles inside each stage so players explore & follow clues
-addWall(-1.4, 1.2, -4.5, 1.4, 2.4, 2.4, true);
-addWall(1.6, 1.2, -13.5, 1.4, 2.4, 2.4, true);
-addWall(-1.5, 1.2, -23.5, 1.4, 2.4, 2.4, true);
-addWall(1.5, 1.2, -33.5, 1.4, 2.4, 2.4, true);
-addWall(-1.5, 1.2, -43.5, 1.4, 2.4, 2.4, true);
+// KALAKERALA ARTS & SPORTS CLUB (CHELAKKADAVU) Wall Advertisements
+const texLoader = new THREE.TextureLoader();
+const logoTexture = texLoader.load("/logo.png", undefined, undefined, () => {
+  // Fallback canvas texture if /logo.png is not yet placed
+});
 
-// 5 Doors + 5 Keys
+function createClubAdBanner(x, y, z, rotY, width = 4.2, height = 2.1) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 256;
+  const ctx = canvas.getContext("2d");
+
+  ctx.fillStyle = "#090c12";
+  ctx.fillRect(0, 0, 512, 256);
+
+  ctx.strokeStyle = "#d4af37";
+  ctx.lineWidth = 8;
+  ctx.strokeRect(10, 10, 492, 236);
+
+  ctx.fillStyle = "#f2c94c";
+  ctx.font = "bold 28px Arial, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("KALAKERALA ARTS & SPORTS CLUB", 256, 78);
+
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 22px Arial, sans-serif";
+  ctx.fillText("CHELAKKADAVU  •  ESTD 1983", 256, 125);
+
+  ctx.fillStyle = "#9fb3c8";
+  ctx.font = "18px Arial, sans-serif";
+  ctx.fillText("3D MAZE TREASURE HUNT CHALLENGE", 256, 175);
+
+  const fallbackTex = new THREE.CanvasTexture(canvas);
+  const bannerMat = new THREE.MeshStandardMaterial({
+    map: fallbackTex,
+    roughness: 0.45
+  });
+
+  const banner = new THREE.Mesh(new THREE.PlaneGeometry(width, height), bannerMat);
+  banner.position.set(x, y, z);
+  banner.rotation.y = rotY;
+  scene.add(banner);
+
+  // If /logo.png exists, place a crisp circular/square emblem badge beside/over it
+  const badgeMat = new THREE.MeshBasicMaterial({
+    map: logoTexture,
+    transparent: true
+  });
+  const badge = new THREE.Mesh(new THREE.PlaneGeometry(1.15, 1.15), badgeMat);
+  const offsetDist = 0.03;
+  badge.position.set(
+    x + Math.sin(rotY) * offsetDist,
+    y + 0.1,
+    z + Math.cos(rotY) * offsetDist
+  );
+  badge.rotation.y = rotY;
+  badge.visible = false;
+  logoTexture.addEventListener("load", () => {
+    badge.visible = true;
+  });
+  scene.add(badge);
+}
+
+// Place KALAKERALA club ads along left & right walls across the enlarged maze
+[-4, -26, -48, -70, -92, -114, -135].forEach((zAd, i) => {
+  if (i % 2 === 0) {
+    createClubAdBanner(-7.95, 1.75, zAd, Math.PI / 2, 4.4, 2.1);
+  } else {
+    createClubAdBanner(7.95, 1.75, zAd, -Math.PI / 2, 4.4, 2.1);
+  }
+});
+
+// Build 12 Stages, Divider Walls, Fake Routes (detour/dead-end blocks), Real Keys & Fake Keys
+function buildKeyMesh(material, scale = 1) {
+  const group = new THREE.Group();
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.32 * scale, 0.09 * scale, 10, 20), material);
+  const stem = new THREE.Mesh(new THREE.BoxGeometry(0.14 * scale, 0.52 * scale, 0.14 * scale), material);
+  stem.position.y = -0.42 * scale;
+  group.add(ring, stem);
+  return group;
+}
+
 TREASURE_STAGES.forEach((stageData, idx) => {
-  const zPos = stageData.doorZ;
+  const zDoor = stageData.doorZ;
+  const zoneMidZ = zDoor + 4.2;
 
-  // Door partition walls leaving a 3-unit wide gate in center
-  addWall(-3.25, 1.5, zPos, 4.0, 3, 0.8);
-  addWall(3.25, 1.5, zPos, 4.0, 3, 0.8);
+  // Partition wall at doorZ with central gate (x from -1.5 to +1.5)
+  addWall(-5.0, 1.6, zDoor, 6.0, 3.2, 0.9);
+  addWall(5.0, 1.6, zDoor, 6.0, 3.2, 0.9);
 
   const doorMesh = new THREE.Mesh(
-    new THREE.BoxGeometry(2.5, 2.8, 0.4),
+    new THREE.BoxGeometry(3.0, 3.0, 0.45),
     lockedDoorMat.clone()
   );
-  doorMesh.position.set(0, 1.4, zPos);
+  doorMesh.position.set(0, 1.5, zDoor);
   scene.add(doorMesh);
 
   doorObjects.push({
     index: idx,
-    z: zPos,
+    z: zDoor,
     mesh: doorMesh,
     unlocked: false
   });
 
-  // Glowing 3D Key mesh (ring + stem)
-  const keyGroup = new THREE.Group();
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.1, 10, 20), keyMat);
-  const stem = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.55, 0.14), keyMat);
-  stem.position.y = -0.45;
-  keyGroup.add(ring, stem);
-  keyGroup.position.set(stageData.keyPos.x, 1.25, stageData.keyPos.z);
-  scene.add(keyGroup);
+  // Fake route maze pillars creating winding corridors & dead-end pockets
+  const pillarX = idx % 2 === 0 ? -2.3 : 2.3;
+  addWall(pillarX, 1.4, zoneMidZ + 1.4, 2.2, 2.8, 1.4, true);
+  addWall(-pillarX, 1.4, zoneMidZ - 1.2, 2.2, 2.8, 1.4, true);
 
-  keyObjects.push({
+  // Real Key
+  const realKeyGroup = buildKeyMesh(realKeyMat, 1.05);
+  realKeyGroup.position.set(stageData.keyPos.x, 1.25, stageData.keyPos.z);
+  scene.add(realKeyGroup);
+
+  realKeyObjects.push({
     index: idx,
     x: stageData.keyPos.x,
     z: stageData.keyPos.z,
-    mesh: keyGroup,
+    mesh: realKeyGroup,
     collected: false
+  });
+
+  // Fake Keys (decoys)
+  (stageData.fakeKeys || []).forEach((fk) => {
+    const fakeGroup = buildKeyMesh(fakeKeyMat, 0.95);
+    fakeGroup.position.set(fk.x, 1.2, fk.z);
+    scene.add(fakeGroup);
+
+    fakeKeyObjects.push({
+      stageIndex: idx,
+      x: fk.x,
+      z: fk.z,
+      mesh: fakeGroup
+    });
   });
 });
 
+// Final Exit Zone at z = -139
 const goalMesh = new THREE.Mesh(
-  new THREE.CylinderGeometry(1.6, 1.6, 0.25, 24),
-  new THREE.MeshStandardMaterial({ color: 0xffd166, emissive: 0x664400 })
+  new THREE.CylinderGeometry(2.0, 2.0, 0.3, 28),
+  new THREE.MeshStandardMaterial({ color: 0xffd166, emissive: 0x775200 })
 );
-goalMesh.position.set(0, 0.12, -55);
+goalMesh.position.set(0, 0.15, -139);
 scene.add(goalMesh);
 
-const playerPos = new THREE.Vector3(0, 1.6, 5);
+const playerPos = new THREE.Vector3(0, 1.6, 6);
 const PLAYER_RADIUS = 0.55;
 
 function syncWorldWithSession() {
-  keyObjects.forEach((k, idx) => {
+  realKeyObjects.forEach((k, idx) => {
     const collected = Boolean(sessionState.collectedKeys[idx]);
     k.collected = collected;
     k.mesh.visible = !collected;
@@ -498,13 +675,13 @@ function syncWorldWithSession() {
   doorObjects.forEach((d, idx) => {
     const unlocked = Boolean(sessionState.unlockedDoors[idx]);
     d.unlocked = unlocked;
-    d.mesh.position.y = unlocked ? -2.2 : 1.4;
+    d.mesh.position.y = unlocked ? -2.4 : 1.5;
     d.mesh.material.color.setHex(unlocked ? 0x2ea043 : 0xd94848);
   });
 
   const startZ = sessionState.currentStageIndex > 0
-    ? TREASURE_STAGES[Math.min(sessionState.currentStageIndex - 1, 4)].doorZ - 2.2
-    : 5;
+    ? TREASURE_STAGES[Math.min(sessionState.currentStageIndex - 1, TOTAL_STAGES - 1)].doorZ - 2.4
+    : 6;
 
   playerPos.set(0, 1.6, startZ);
   camera.position.copy(playerPos);
@@ -522,46 +699,63 @@ function collidesWithWall(x, z) {
   return false;
 }
 
-async function checkKeyPickup() {
+async function checkKeysAndDoors(dt) {
+  if (sessionState.fakeKeyCooldown > 0) {
+    sessionState.fakeKeyCooldown = Math.max(0, sessionState.fakeKeyCooldown - dt);
+  }
+
   const activeStage = sessionState.currentStageIndex;
-  if (activeStage >= keyObjects.length) return;
+  if (activeStage < realKeyObjects.length) {
+    const targetKey = realKeyObjects[activeStage];
+    if (!targetKey.collected) {
+      const dx = playerPos.x - targetKey.x;
+      const dz = playerPos.z - targetKey.z;
+      if (dx * dx + dz * dz <= 1.3 * 1.3) {
+        targetKey.collected = true;
+        targetKey.mesh.visible = false;
+        sessionState.collectedKeys[activeStage] = true;
+        playTone(680, "triangle", 0.2);
 
-  const targetKey = keyObjects[activeStage];
-  if (targetKey.collected) return;
+        const door = doorObjects[activeStage];
+        door.unlocked = true;
+        door.mesh.position.y = -2.4;
+        door.mesh.material.color.setHex(0x2ea043);
+        sessionState.unlockedDoors[activeStage] = true;
+        sessionState.currentStageIndex = activeStage + 1;
 
-  const dx = playerPos.x - targetKey.x;
-  const dz = playerPos.z - targetKey.z;
-  const distSq = dx * dx + dz * dz;
+        updateHudAndClue();
+        showToast(`✅ ശരിയായ Key ${activeStage + 1} ലഭിച്ചു! Door ${activeStage + 1} തുറന്നു!`);
+        await saveProgressToServer(false);
+      }
+    }
 
-  if (distSq <= 1.25 * 1.25) {
-    targetKey.collected = true;
-    targetKey.mesh.visible = false;
-    sessionState.collectedKeys[activeStage] = true;
-    playPickupSound(620);
-
-    // Automatically unlock the stage's door once key is collected!
-    const door = doorObjects[activeStage];
-    door.unlocked = true;
-    door.mesh.position.y = -2.2;
-    door.mesh.material.color.setHex(0x2ea043);
-    sessionState.unlockedDoors[activeStage] = true;
-    sessionState.currentStageIndex = activeStage + 1;
-
-    updateHudAndClue();
-    showToast(`🔑 Key ${activeStage + 1} കണ്ടെത്തി! Door ${activeStage + 1} തുറന്നു!`);
-    await saveProgressToServer(false);
+    // Check fake keys in active stage
+    if (sessionState.fakeKeyCooldown === 0) {
+      for (const fk of fakeKeyObjects) {
+        if (fk.stageIndex !== activeStage) continue;
+        const dx = playerPos.x - fk.x;
+        const dz = playerPos.z - fk.z;
+        if (dx * dx + dz * dz <= 1.15 * 1.15) {
+          sessionState.fakeKeyCooldown = 2.0;
+          sessionState.startTimeMs -= 3000; // +3s penalty for touching fake key
+          playTone(220, "sawtooth", 0.22);
+          showToast("❌ Fake Key! വ്യാജ കീ ആണ് (+3s പെനാൽറ്റി). ക്ലൂ കൃത്യമായി വായിക്കുക!", "#ff6b6b");
+          break;
+        }
+      }
+    }
   }
 }
 
 function collidesWithLockedDoor(x, z) {
   for (const d of doorObjects) {
     if (d.unlocked) continue;
-    const closestX = Math.max(-1.25, Math.min(x, 1.25));
+    const closestX = Math.max(-1.5, Math.min(x, 1.5));
     const closestZ = Math.max(d.z - 0.35, Math.min(z, d.z + 0.35));
     const dx = x - closestX;
     const dz = z - closestZ;
     if (dx * dx + dz * dz < PLAYER_RADIUS * PLAYER_RADIUS) {
-      showToast(`🔒 Door ${d.index + 1} ലോക്ക് ആണ്! മുകളിലെ Clue വായിച്ച് Key എടുക്കുക.`, "#ff9f43");
+      showToast(`🔒 Door ${d.index + 1} ലോക്ക് ആണ്! മുകളിലെ Clue വായിച്ച് ശരിയായ Key എടുക്കുക.`, "#ff9f43");
       return true;
     }
   }
@@ -583,7 +777,7 @@ async function handleGameWin() {
 
   if (UI.hud) UI.hud.style.display = "none";
   if (UI.winSummary) {
-    UI.winSummary.textContent = `അഭിനന്ദനങ്ങൾ ${sessionState.playerName}! 5 കീകളും കണ്ടെത്തി എക്സിറ്റിൽ എത്തിയ സമയം: ${finalTime}s`;
+    UI.winSummary.textContent = `അഭിനന്ദനങ്ങൾ ${sessionState.playerName}! എല്ലാ 12 വാതിലുകളും കടന്ന് ഫിനിഷ് ചെയ്ത സമയം: ${finalTime}s`;
   }
   if (UI.winModal) UI.winModal.style.display = "flex";
 
@@ -611,7 +805,7 @@ async function handleGameWin() {
 }
 
 // ==========================================
-// 8. CONTROLS & BACK/REFRESH RESUME
+// 8. CONTROLS & SESSION RESUME HOOKS
 // ==========================================
 window.addEventListener("beforeunload", (e) => {
   if (sessionState.active && !sessionState.finished) {
@@ -687,7 +881,7 @@ function animate(now) {
       UI.hudTimer.textContent = `Time: ${sessionState.elapsedSeconds.toFixed(1)}s`;
     }
 
-    const moveSpeed = 6.8 * dt;
+    const moveSpeed = 7.2 * dt;
     let moveX = 0;
     let moveZ = 0;
 
@@ -706,20 +900,23 @@ function animate(now) {
       playerPos.z = nextZ;
     }
 
-    checkKeyPickup();
+    checkKeysAndDoors(dt);
 
     camera.position.set(playerPos.x, playerPos.y, playerPos.z);
-    camera.lookAt(playerPos.x, playerPos.y - 0.1, playerPos.z - 8);
+    camera.lookAt(playerPos.x, playerPos.y - 0.1, playerPos.z - 9);
 
-    if (playerPos.z <= -54.2) {
+    if (playerPos.z <= -137.8) {
       handleGameWin();
     }
   }
 
-  keyObjects.forEach((k) => {
-    if (!k.collected) k.mesh.rotation.y += 2.2 * dt;
+  realKeyObjects.forEach((k) => {
+    if (!k.collected) k.mesh.rotation.y += 2.4 * dt;
   });
-  goalMesh.rotation.y += 1.5 * dt;
+  fakeKeyObjects.forEach((fk) => {
+    fk.mesh.rotation.y -= 2.8 * dt;
+  });
+  goalMesh.rotation.y += 1.6 * dt;
   renderer.render(scene, camera);
 }
 
