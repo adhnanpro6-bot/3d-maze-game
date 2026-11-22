@@ -12,24 +12,31 @@
   <!-- 1. ACCESS GATE SCREEN -->
   <div id="access-screen" class="overlay-screen">
     <div class="card">
-      <h1>3D MAZE PUZZLE CHALLENGE</h1>
-      <p class="subtitle">5 വാതിലുകൾ കടന്ന് എക്സിറ്റിൽ എത്തുക</p>
+      <h1>3D MAZE CHALLENGE</h1>
+      <p class="subtitle">10 വാതിലുകൾ കടന്ന് Centre Fountain-ൽ എത്തുക</p>
 
       <label for="player-name">കളിക്കാരന്റെ പേര്</label>
       <input id="player-name" type="text" placeholder="നിങ്ങളുടെ പേര് നൽകുക" autocomplete="off" />
 
-      <label for="access-code">ആക്സസ് കോഡ്</label>
-      <input id="access-code" type="text" placeholder="ഉദാ: KKMQZN01-7842" autocomplete="off" />
+      <label for="access-code">പുതിയ ആക്സസ് കോഡ്</label>
+      <input id="access-code" type="text" placeholder="ഉദാ: KKMQZN02-9153" autocomplete="off" />
 
       <button id="start-btn" type="button">കളി തുടങ്ങുക</button>
       <p id="login-status" class="status-text"></p>
+
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.12);margin:16px 0;" />
+
+      <label for="continue-code-input">ഇതിനകം ഉപയോഗിച്ച ആക്സസ് കോഡ് (Continue Game)</label>
+      <input id="continue-code-input" type="text" placeholder="ഉദാ: KKMQZN01-7842" autocomplete="off" />
+      <button id="continue-btn" type="button" style="width:100%;margin-top:10px;background:rgba(59,130,246,0.22);border:1px solid rgba(96,165,250,0.55);color:#dbeafe;">Continue Game</button>
+      <p id="continue-status" class="status-text"></p>
     </div>
   </div>
 
   <!-- 2. GAME HUD & 3D CANVAS -->
   <div id="hud" style="display: none;">
     <span id="hud-player">Player: -</span>
-    <span id="hud-door">Door: 1 / 5</span>
+    <span id="hud-door">Active Door: 1 / 10</span>
     <span id="hud-timer">Time: 0.0s</span>
   </div>
 
@@ -42,20 +49,6 @@
       <button id="btn-left" type="button">◀</button>
       <button id="btn-down" type="button">▼</button>
       <button id="btn-right" type="button">▶</button>
-    </div>
-  </div>
-
-  <!-- 3. PUZZLE MODAL -->
-  <div id="puzzle-modal" class="overlay-screen" style="display: none;">
-    <div class="card">
-      <h2 id="puzzle-title">Door Lock</h2>
-      <p id="puzzle-question"></p>
-      <input id="puzzle-answer" type="text" placeholder="ഉത്തരം നൽകുക" autocomplete="off" />
-      <div class="btn-row">
-        <button id="puzzle-submit-btn" type="button">അൺലോക്ക് ചെയ്യുക</button>
-        <button id="puzzle-close-btn" type="button">അടയ്ക്കുക</button>
-      </div>
-      <p id="puzzle-feedback" class="status-text"></p>
     </div>
   </div>
 
