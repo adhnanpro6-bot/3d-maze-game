@@ -2,8 +2,9 @@
 // 1. CONFIGURATION
 // ==========================================
 const VERIFY_ENDPOINT = "/api/verify-code";
+const RESUME_ENDPOINT = "/api/resume-session";
+const PROGRESS_ENDPOINT = "/api/save-progress";
 
-// Google Form URL-ഉം entry ID-കളും ഇവിടെ നൽകുക (വേണമെങ്കിൽ)
 const GOOGLE_FORM_CONFIG = {
   enabled: false,
   formResponseUrl: "https://docs.google.com/forms/d/e/YOUR_FORM_ID/formResponse",
@@ -14,42 +15,16 @@ const GOOGLE_FORM_CONFIG = {
   }
 };
 
-// 5 Sequential Doors & Puzzles
 const DOOR_PUZZLES = [
-  {
-    doorNumber: 1,
-    title: "Door 1 — Cipher Lock",
-    question: "What is 14 + 28?",
-    answer: "42"
-  },
-  {
-    doorNumber: 2,
-    title: "Door 2 — Sequence Gate",
-    question: "Next number in sequence: 3, 6, 12, 24, ?",
-    answer: "48"
-  },
-  {
-    doorNumber: 3,
-    title: "Door 3 — Code Word",
-    question: "Unscramble to form a game term: Z E M A",
-    answer: "MAZE"
-  },
-  {
-    doorNumber: 4,
-    title: "Door 4 — Logic Math",
-    question: "If 5x = 85, what is x?",
-    answer: "17"
-  },
-  {
-    doorNumber: 5,
-    title: "Door 5 — Final Vault",
-    question: "How many sides does a hexagon have?",
-    answer: "6"
-  }
+  { doorNumber: 1, title: "Door 1 — Cipher Lock", question: "What is 14 + 28?", answer: "42" },
+  { doorNumber: 2, title: "Door 2 — Sequence Gate", question: "Next number in sequence: 3, 6, 12, 24, ?", answer: "48" },
+  { doorNumber: 3, title: "Door 3 — Code Word", question: "Unscramble to form a game term: Z E M A", answer: "MAZE" },
+  { doorNumber: 4, title: "Door 4 — Logic Math", question: "If 5x = 85, what is x?", answer: "17" },
+  { doorNumber: 5, title: "Door 5 — Final Vault", question: "How many sides does a hexagon have?", answer: "6" }
 ];
 
 // ==========================================
-// 2. DOM ELEMENTS (Matched to index.html)
+// 2. DOM ELEMENTS
 // ==========================================
 const UI = {
   accessScreen: document.getElementById("access-screen"),
@@ -84,10 +59,11 @@ const UI = {
 };
 
 // ==========================================
-// 3. GAME STATE (No localStorage usage)
+// 3. GAME STATE
 // ==========================================
 let sessionState = {
   active: false,
+  sessionId: "",
   playerName: "",
   accessCode: "",
   currentDoorIndex: 0,
@@ -106,15 +82,69 @@ const keys = {
 };
 
 // ==========================================
-// 4. SERVER CODE VERIFICATION (Google Sheet UsedCodes)
+// 4. SESSION TOKEN HELPERS (URL Hash + window.name)
+// ==========================================
+function persistSessionId(sessionId) {
+  if (!sessionId) return;
+  try {
+    window.name = JSON.stringify({ mazeSessionId: sessionId });
+  } catch (_) {}
+  try {
+    history.replaceState(null, "", "#session=" + encodeURIComponent(sessionId));
+  } catch (_) {
+    window.location.hash = "session=" + encodeURIComponent(sessionId);
+  }
+}
+
+function clearSessionId() {
+  try {
+    window.name = "";
+  } catch (_) {}
+  try {
+    history.replaceState(null, "", window.location.pathname + window.location.search);
+  } catch (_) {}
+}
+
+function readPersistedSessionId() {
+  const hash = window.location.hash || "";
+  const match = hash.match(/session=([^&]+)/);
+  if (match && match[1]) {
+    return decodeURIComponent(match[1]);
+  }
+  try {
+    if (window.name) {
+      const parsed = JSON.parse(window.name);
+      if (parsed && parsed.mazeSessionId) return parsed.mazeSessionId;
+    }
+  } catch (_) {}
+  return "";
+}
+
+async function saveProgressToServer(finished = false) {
+  if (!sessionState.sessionId) return;
+  try {
+    await fetch(PROGRESS_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sessionId: sessionState.sessionId,
+        doorIndex: sessionState.currentDoorIndex,
+        elapsedSeconds: Number(sessionState.elapsedSeconds.toFixed(2)),
+        finished
+      })
+    });
+  } catch (err) {
+    console.warn("Progress sync failed:", err);
+  }
+}
+
+// ==========================================
+// 5. SERVER VERIFICATION & RESUME
 // ==========================================
 async function verifyAccessCode(code, playerName) {
   const cleanCode = String(code || "").trim().toUpperCase();
   const cleanName = String(playerName || "").trim();
-
-  if (!cleanCode) {
-    return { valid: false, reason: "EMPTY_CODE" };
-  }
+  if (!cleanCode) return { valid: false, reason: "EMPTY_CODE" };
 
   try {
     const response = await fetch(VERIFY_ENDPOINT, {
@@ -122,12 +152,40 @@ async function verifyAccessCode(code, playerName) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code: cleanCode, playerName: cleanName })
     });
-
     return await response.json();
   } catch (err) {
     console.error("Verify code error:", err);
     return { valid: false, reason: "NETWORK_ERROR" };
   }
+}
+
+async function tryResumeExistingSession() {
+  const existingId = readPersistedSessionId();
+  if (!existingId) return false;
+
+  setLoginStatus("പഴയ സെഷൻ തുടരുന്നു...", false);
+  try {
+    const response = await fetch(RESUME_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId: existingId })
+    });
+    const data = await response.json();
+    if (data && data.valid) {
+      startSession({
+        sessionId: data.sessionId,
+        playerName: data.playerName,
+        accessCode: data.code,
+        doorIndex: Number(data.doorIndex || 0),
+        elapsedSeconds: Number(data.elapsedSeconds || 0)
+      });
+      return true;
+    }
+  } catch (err) {
+    console.warn("Resume error:", err);
+  }
+  setLoginStatus("", false);
+  return false;
 }
 
 async function handleStartGame() {
@@ -162,7 +220,13 @@ async function handleStartGame() {
   }
 
   setLoginStatus("", false);
-  startNewSession(playerName, code);
+  startSession({
+    sessionId: result.sessionId,
+    playerName,
+    accessCode: code,
+    doorIndex: Number(result.doorIndex || 0),
+    elapsedSeconds: Number(result.elapsedSeconds || 0)
+  });
 }
 
 function setLoginStatus(msg, isError) {
@@ -171,20 +235,25 @@ function setLoginStatus(msg, isError) {
   UI.loginStatus.style.color = isError ? "#ff6b6b" : "#7ee787";
 }
 
-function startNewSession(playerName, accessCode) {
+function startSession({ sessionId, playerName, accessCode, doorIndex, elapsedSeconds }) {
+  const safeDoorIdx = Math.max(0, Math.min(doorIndex, 5));
+  const unlocked = [false, false, false, false, false].map((_, i) => i < safeDoorIdx);
+
   sessionState = {
     active: true,
+    sessionId,
     playerName,
     accessCode,
-    currentDoorIndex: 0,
-    unlockedDoors: [false, false, false, false, false],
+    currentDoorIndex: safeDoorIdx,
+    unlockedDoors: unlocked,
     activePuzzleDoorIndex: null,
-    startTimeMs: performance.now(),
-    elapsedSeconds: 0,
+    startTimeMs: performance.now() - elapsedSeconds * 1000,
+    elapsedSeconds,
     finished: false
   };
 
-  resetPlayerAndDoors();
+  persistSessionId(sessionId);
+  applyDoorStatesAndPosition();
 
   if (UI.accessScreen) UI.accessScreen.style.display = "none";
   if (UI.winModal) UI.winModal.style.display = "none";
@@ -200,34 +269,27 @@ function updateHudDoor() {
 }
 
 // ==========================================
-// 5. THREE.JS 3D MAZE & 5 SEQUENTIAL DOORS
+// 6. THREE.JS 3D MAZE & 5 SEQUENTIAL DOORS
 // ==========================================
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0b1020);
 scene.fog = new THREE.Fog(0x0b1020, 12, 36);
 
-const camera = new THREE.PerspectiveCamera(
-  70,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  100
-);
-
+const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 100);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 UI.canvasContainer.appendChild(renderer.domElement);
 
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
-scene.add(ambientLight);
-
+scene.add(new THREE.AmbientLight(0xffffff, 0.75));
 const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
 dirLight.position.set(10, 20, 10);
 scene.add(dirLight);
 
-const floorGeo = new THREE.PlaneGeometry(24, 64);
-const floorMat = new THREE.MeshStandardMaterial({ color: 0x162038, roughness: 0.8 });
-const floor = new THREE.Mesh(floorGeo, floorMat);
+const floor = new THREE.Mesh(
+  new THREE.PlaneGeometry(24, 64),
+  new THREE.MeshStandardMaterial({ color: 0x162038, roughness: 0.8 })
+);
 floor.rotation.x = -Math.PI / 2;
 floor.position.set(0, 0, -24);
 scene.add(floor);
@@ -242,12 +304,7 @@ function addWall(x, y, z, w, h, d) {
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
   mesh.position.set(x, y, z);
   scene.add(mesh);
-  wallColliders.push({
-    minX: x - w / 2,
-    maxX: x + w / 2,
-    minZ: z - d / 2,
-    maxZ: z + d / 2
-  });
+  wallColliders.push({ minX: x - w / 2, maxX: x + w / 2, minZ: z - d / 2, maxZ: z + d / 2 });
 }
 
 addWall(-6, 1.5, -24, 1, 3, 64);
@@ -260,19 +317,11 @@ doorZPositions.forEach((zPos, idx) => {
   addWall(-3.75, 1.5, zPos, 4.5, 3, 0.8);
   addWall(3.75, 1.5, zPos, 4.5, 3, 0.8);
 
-  const doorMesh = new THREE.Mesh(
-    new THREE.BoxGeometry(3, 2.8, 0.4),
-    lockedDoorMat.clone()
-  );
+  const doorMesh = new THREE.Mesh(new THREE.BoxGeometry(3, 2.8, 0.4), lockedDoorMat.clone());
   doorMesh.position.set(0, 1.4, zPos);
   scene.add(doorMesh);
 
-  doorObjects.push({
-    index: idx,
-    z: zPos,
-    mesh: doorMesh,
-    unlocked: false
-  });
+  doorObjects.push({ index: idx, z: zPos, mesh: doorMesh, unlocked: false });
 });
 
 const goalMesh = new THREE.Mesh(
@@ -285,16 +334,22 @@ scene.add(goalMesh);
 const playerPos = new THREE.Vector3(0, 1.6, 4);
 const PLAYER_RADIUS = 0.55;
 
-function resetPlayerAndDoors() {
-  playerPos.set(0, 1.6, 4);
-  camera.position.copy(playerPos);
-  camera.lookAt(0, 1.5, -10);
-
-  doorObjects.forEach((d) => {
-    d.unlocked = false;
-    d.mesh.position.y = 1.4;
-    d.mesh.material.color.setHex(0xd94848);
+function applyDoorStatesAndPosition() {
+  doorObjects.forEach((d, idx) => {
+    const isUnlocked = Boolean(sessionState.unlockedDoors[idx]);
+    d.unlocked = isUnlocked;
+    d.mesh.position.y = isUnlocked ? -2.0 : 1.4;
+    d.mesh.material.color.setHex(isUnlocked ? 0x2ea043 : 0xd94848);
   });
+
+  // Place player safely just behind their current unlocked progress
+  const startZ = sessionState.currentDoorIndex > 0
+    ? doorZPositions[Math.min(sessionState.currentDoorIndex - 1, 4)] - 2.2
+    : 4;
+
+  playerPos.set(0, 1.6, startZ);
+  camera.position.copy(playerPos);
+  camera.lookAt(0, 1.5, startZ - 12);
 }
 
 function collidesWithWall(x, z) {
@@ -303,9 +358,7 @@ function collidesWithWall(x, z) {
     const closestZ = Math.max(w.minZ, Math.min(z, w.maxZ));
     const dx = x - closestX;
     const dz = z - closestZ;
-    if (dx * dx + dz * dz < PLAYER_RADIUS * PLAYER_RADIUS) {
-      return true;
-    }
+    if (dx * dx + dz * dz < PLAYER_RADIUS * PLAYER_RADIUS) return true;
   }
   return false;
 }
@@ -313,16 +366,10 @@ function collidesWithWall(x, z) {
 function collidesWithLockedDoor(x, z) {
   for (const d of doorObjects) {
     if (d.unlocked) continue;
-    const minX = -1.5;
-    const maxX = 1.5;
-    const minZ = d.z - 0.35;
-    const maxZ = d.z + 0.35;
-
-    const closestX = Math.max(minX, Math.min(x, maxX));
-    const closestZ = Math.max(minZ, Math.min(z, maxZ));
+    const closestX = Math.max(-1.5, Math.min(x, 1.5));
+    const closestZ = Math.max(d.z - 0.35, Math.min(z, d.z + 0.35));
     const dx = x - closestX;
     const dz = z - closestZ;
-
     if (dx * dx + dz * dz < PLAYER_RADIUS * PLAYER_RADIUS) {
       openPuzzleForDoor(d.index);
       return true;
@@ -332,7 +379,7 @@ function collidesWithLockedDoor(x, z) {
 }
 
 // ==========================================
-// 6. PUZZLE MODAL & DOOR UNLOCKING
+// 7. PUZZLE MODAL & DOOR UNLOCKING
 // ==========================================
 function openPuzzleForDoor(doorIndex) {
   if (!sessionState.active || sessionState.finished) return;
@@ -360,7 +407,7 @@ function closePuzzleModal() {
   if (UI.puzzleModal) UI.puzzleModal.style.display = "none";
 }
 
-function submitPuzzleAnswer() {
+async function submitPuzzleAnswer() {
   const idx = sessionState.activePuzzleDoorIndex;
   if (idx === null) return;
 
@@ -378,6 +425,8 @@ function submitPuzzleAnswer() {
     sessionState.currentDoorIndex = idx + 1;
     updateHudDoor();
     closePuzzleModal();
+
+    await saveProgressToServer(false);
   } else if (UI.puzzleFeedback) {
     UI.puzzleFeedback.textContent = "ഉത്തരം ശരിയല്ല. വീണ്ടും ശ്രമിക്കുക!";
     UI.puzzleFeedback.style.color = "#ff6b6b";
@@ -385,14 +434,17 @@ function submitPuzzleAnswer() {
 }
 
 // ==========================================
-// 7. WIN & GOOGLE FORM SUBMISSION
+// 8. WIN & GOOGLE FORM SUBMISSION
 // ==========================================
 async function handleGameWin() {
   if (sessionState.finished) return;
   sessionState.finished = true;
   sessionState.active = false;
+  clearSessionId();
 
   const finalTime = sessionState.elapsedSeconds.toFixed(2);
+  await saveProgressToServer(true);
+
   if (UI.hud) UI.hud.style.display = "none";
   if (UI.winSummary) {
     UI.winSummary.textContent = `അഭിനന്ദനങ്ങൾ ${sessionState.playerName}! എല്ലാ 5 വാതിലുകളും പൂർത്തിയാക്കിയ സമയം: ${finalTime}s`;
@@ -403,15 +455,9 @@ async function handleGameWin() {
     if (UI.formSubmitStatus) UI.formSubmitStatus.textContent = "സ്കോർ Google Form-ലേക്ക് അയക്കുന്നു...";
     try {
       const formData = new URLSearchParams();
-      if (GOOGLE_FORM_CONFIG.entries.playerName) {
-        formData.append(GOOGLE_FORM_CONFIG.entries.playerName, sessionState.playerName);
-      }
-      if (GOOGLE_FORM_CONFIG.entries.accessCode) {
-        formData.append(GOOGLE_FORM_CONFIG.entries.accessCode, sessionState.accessCode);
-      }
-      if (GOOGLE_FORM_CONFIG.entries.completionTime) {
-        formData.append(GOOGLE_FORM_CONFIG.entries.completionTime, `${finalTime} seconds`);
-      }
+      if (GOOGLE_FORM_CONFIG.entries.playerName) formData.append(GOOGLE_FORM_CONFIG.entries.playerName, sessionState.playerName);
+      if (GOOGLE_FORM_CONFIG.entries.accessCode) formData.append(GOOGLE_FORM_CONFIG.entries.accessCode, sessionState.accessCode);
+      if (GOOGLE_FORM_CONFIG.entries.completionTime) formData.append(GOOGLE_FORM_CONFIG.entries.completionTime, `${finalTime} seconds`);
 
       await fetch(GOOGLE_FORM_CONFIG.formResponseUrl, {
         method: "POST",
@@ -420,21 +466,31 @@ async function handleGameWin() {
         body: formData.toString()
       });
 
-      if (UI.formSubmitStatus) {
-        UI.formSubmitStatus.textContent = "സമയം Google Form-ൽ രേഖപ്പെടുത്തി.";
-      }
+      if (UI.formSubmitStatus) UI.formSubmitStatus.textContent = "സമയം Google Form-ൽ രേഖപ്പെടുത്തി.";
     } catch (err) {
       console.error("Google Form submit error:", err);
-      if (UI.formSubmitStatus) {
-        UI.formSubmitStatus.textContent = "Form സബ്മിഷനിൽ പിശക് സംഭവിച്ചു.";
-      }
+      if (UI.formSubmitStatus) UI.formSubmitStatus.textContent = "Form സബ്മിഷനിൽ പിശക് സംഭവിച്ചു.";
     }
   }
 }
 
 // ==========================================
-// 8. CONTROLS
+// 9. CONTROLS & BACK/REFRESH PROTECTION
 // ==========================================
+window.addEventListener("beforeunload", (e) => {
+  if (sessionState.active && !sessionState.finished) {
+    saveProgressToServer(false);
+    e.preventDefault();
+    e.returnValue = "";
+  }
+});
+
+window.addEventListener("pageshow", () => {
+  if (!sessionState.active && !sessionState.finished) {
+    tryResumeExistingSession();
+  }
+});
+
 window.addEventListener("keydown", (e) => {
   if (sessionState.activePuzzleDoorIndex !== null) {
     if (e.key === "Enter") submitPuzzleAnswer();
@@ -455,14 +511,8 @@ window.addEventListener("keyup", (e) => {
 
 function bindTouchBtn(el, keyName) {
   if (!el) return;
-  const press = (ev) => {
-    ev.preventDefault();
-    keys[keyName] = true;
-  };
-  const release = (ev) => {
-    ev.preventDefault();
-    keys[keyName] = false;
-  };
+  const press = (ev) => { ev.preventDefault(); keys[keyName] = true; };
+  const release = (ev) => { ev.preventDefault(); keys[keyName] = false; };
   el.addEventListener("touchstart", press, { passive: false });
   el.addEventListener("touchend", release, { passive: false });
   el.addEventListener("mousedown", press);
@@ -480,6 +530,7 @@ if (UI.puzzleSubmitBtn) UI.puzzleSubmitBtn.addEventListener("click", submitPuzzl
 if (UI.puzzleCloseBtn) UI.puzzleCloseBtn.addEventListener("click", closePuzzleModal);
 if (UI.playAgainBtn) {
   UI.playAgainBtn.addEventListener("click", () => {
+    clearSessionId();
     window.location.reload();
   });
 }
@@ -491,7 +542,7 @@ window.addEventListener("resize", () => {
 });
 
 // ==========================================
-// 9. MAIN LOOP
+// 10. MAIN LOOP
 // ==========================================
 let lastFrameTime = performance.now();
 
@@ -539,4 +590,5 @@ function animate(now) {
   renderer.render(scene, camera);
 }
 
+tryResumeExistingSession();
 requestAnimationFrame(animate);
