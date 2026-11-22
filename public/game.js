@@ -17,71 +17,21 @@ const GOOGLE_FORM_CONFIG = {
   }
 };
 
-// 10 Door Questions (Maths, GK & Sports) — Answer is case-insensitive trimmed string
+// 10 Sequential Questions (Maths, GK & Sports) — Wrong answer triggers Horror Ghost kill & restart from Door 1
 const DOOR_QUESTIONS = [
-  {
-    door: 1,
-    category: "MATHS",
-    question: "Door 1 (Maths): 14 + 28 എത്രയാണ്?",
-    answer: "42"
-  },
-  {
-    door: 2,
-    category: "SPORTS",
-    question: "Door 2 (Sports): ഒരു ഫുട്ബോൾ ടീമിൽ സാധാരണയായി എത്ര കളിക്കാർ കളിക്കുന്നു?",
-    answer: "11"
-  },
-  {
-    door: 3,
-    category: "GK",
-    question: "Door 3 (GK): കേരളത്തിൽ ആകെ എത്ര ജില്ലകളുണ്ട്?",
-    answer: "14"
-  },
-  {
-    door: 4,
-    category: "MATHS",
-    question: "Door 4 (Maths): 12 × 6 എത്രയാണ്?",
-    answer: "72"
-  },
-  {
-    door: 5,
-    category: "SPORTS",
-    question: "Door 5 (Sports): FIFA ലോകകപ്പ് എത്ര വർഷം കൂടുമ്പോഴാണ് നടക്കുന്നത്?",
-    answer: "4"
-  },
-  {
-    door: 6,
-    category: "GK",
-    question: "Door 6 (GK): ഇന്ത്യയുടെ തലസ്ഥാന നഗരം ഏതാണ്?",
-    answer: "NEW DELHI"
-  },
-  {
-    door: 7,
-    category: "MATHS",
-    question: "Door 7 (Maths): 150 - 67 എത്രയാണ്?",
-    answer: "83"
-  },
-  {
-    door: 8,
-    category: "SPORTS",
-    question: "Door 8 (Sports): ഒളിമ്പിക് പതാകയിൽ എത്ര വളയങ്ങളുണ്ട്?",
-    answer: "5"
-  },
-  {
-    door: 9,
-    category: "GK",
-    question: "Door 9 (GK): സൗരയൂഥത്തിലെ ഏറ്റവും വലിയ ഗ്രഹം ഏതാണ്?",
-    answer: "JUPITER"
-  },
-  {
-    door: 10,
-    category: "MATHS & FINAL",
-    question: "Door 10 (Maths): 9² (9 square) എത്രയാണ്? ശരിയാക്കിയാൽ Centre Fountain തുറക്കും!",
-    answer: "81"
-  }
+  { door: 1, category: "MATHS", question: "Door 1 (Maths): 14 + 28 എത്രയാണ്? (തെറ്റിയാൽ Ghost കൊല്ലും!)", answer: "42" },
+  { door: 2, category: "SPORTS", question: "Door 2 (Sports): ഒരു ഫുട്ബോൾ ടീമിൽ സാധാരണയായി എത്ര കളിക്കാർ കളിക്കുന്നു?", answer: "11" },
+  { door: 3, category: "GK", question: "Door 3 (GK): കേരളത്തിൽ ആകെ എത്ര ജില്ലകളുണ്ട്?", answer: "14" },
+  { door: 4, category: "MATHS", question: "Door 4 (Maths): 12 × 6 എത്രയാണ്?", answer: "72" },
+  { door: 5, category: "SPORTS", question: "Door 5 (Sports): FIFA ലോകകപ്പ് എത്ര വർഷം കൂടുമ്പോഴാണ് നടക്കുന്നത്?", answer: "4" },
+  { door: 6, category: "GK", question: "Door 6 (GK): ഇന്ത്യയുടെ തലസ്ഥാന നഗരം ഏതാണ്?", answer: "NEW DELHI" },
+  { door: 7, category: "MATHS", question: "Door 7 (Maths): 150 - 67 എത്രയാണ്?", answer: "83" },
+  { door: 8, category: "SPORTS", question: "Door 8 (Sports): ഒളിമ്പിക് പതാകയിൽ എത്ര വളയങ്ങളുണ്ട്?", answer: "5" },
+  { door: 9, category: "GK", question: "Door 9 (GK): സൗരയൂഥത്തിലെ ഏറ്റവും വലിയ ഗ്രഹം ഏതാണ്?", answer: "JUPITER" },
+  { door: 10, category: "FINAL MATHS", question: "Door 10 (Final): 9² എത്രയാണ്? ശരിയാക്കിയാൽ Centre Fountain തുറക്കും!", answer: "81" }
 ];
 
-// Single ordered path of 10 Doors leading from South Entrance (z = +36) into Centre Fountain Plaza (x = 0, z = 0)
+// Single ordered path of 10 Doors leading from South Entrance (z = +35) into Centre Fountain (x = 0, z = 0)
 const DOOR_WAYPOINTS = [
   { x: 0, z: 28, rotY: 0 },
   { x: -16, z: 22, rotY: Math.PI / 2 },
@@ -96,7 +46,7 @@ const DOOR_WAYPOINTS = [
 ];
 
 // ==========================================
-// 2. DOM ELEMENTS & QUESTION MODAL
+// 2. DOM ELEMENTS, QUESTION MODAL & HORROR OVERLAY
 // ==========================================
 const UI = {
   accessScreen: document.getElementById("access-screen"),
@@ -122,7 +72,6 @@ const UI = {
   btnRight: document.getElementById("btn-right")
 };
 
-// Build clean Question Modal dynamically if not present in index.html
 let questionModal = document.getElementById("puzzle-modal");
 if (!questionModal) {
   questionModal = document.createElement("div");
@@ -134,21 +83,21 @@ if (!questionModal) {
     "display: none",
     "align-items: center",
     "justify-content: center",
-    "background: rgba(4, 8, 16, 0.82)",
+    "background: rgba(5, 8, 15, 0.84)",
     "backdrop-filter: blur(4px)",
     "padding: 16px"
   ].join(";");
 
   questionModal.innerHTML = `
-    <div style="width:100%;max-width:420px;background:#101a2e;border:1px solid rgba(255,209,102,0.5);border-radius:14px;padding:22px;color:#f0f6fc;box-shadow:0 16px 40px rgba(0,0,0,0.65);font-family:system-ui,sans-serif;">
-      <div id="dq-badge" style="display:inline-block;padding:4px 10px;border-radius:999px;background:rgba(255,209,102,0.16);color:#ffd166;font-size:12px;font-weight:700;margin-bottom:10px;">DOOR LOCK</div>
+    <div style="width:100%;max-width:420px;background:#121826;border:1px solid rgba(255,90,90,0.55);border-radius:14px;padding:22px;color:#f8fafc;box-shadow:0 18px 45px rgba(0,0,0,0.75);font-family:system-ui,sans-serif;">
+      <div id="dq-badge" style="display:inline-block;padding:4px 10px;border-radius:999px;background:rgba(239,68,68,0.2);color:#fca5a5;font-size:12px;font-weight:700;margin-bottom:10px;">DOOR LOCK</div>
       <h3 id="dq-question" style="margin:0 0 14px 0;font-size:17px;line-height:1.45;color:#ffffff;"></h3>
       <input id="dq-input" type="text" placeholder="ഉത്തരം ടൈപ്പ് ചെയ്യുക..." autocomplete="off"
-        style="width:100%;box-sizing:border-box;padding:11px 12px;border-radius:8px;border:1px solid #334870;background:#09101d;color:#fff;font-size:15px;margin-bottom:12px;outline:none;" />
+        style="width:100%;box-sizing:border-box;padding:11px 12px;border-radius:8px;border:1px solid #384661;background:#090d16;color:#fff;font-size:15px;margin-bottom:12px;outline:none;" />
       <div id="dq-feedback" style="min-height:20px;font-size:13px;color:#ff6b6b;margin-bottom:10px;"></div>
       <div style="display:flex;gap:10px;justify-content:flex-end;">
-        <button id="dq-back-btn" type="button" style="padding:9px 14px;border-radius:8px;border:1px solid #394b6b;background:transparent;color:#cbd5e1;cursor:pointer;">പിന്നോട്ട്</button>
-        <button id="dq-submit-btn" type="button" style="padding:9px 18px;border-radius:8px;border:none;background:#2ea043;color:#fff;font-weight:700;cursor:pointer;">വാതിൽ തുറക്കുക</button>
+        <button id="dq-back-btn" type="button" style="padding:9px 14px;border-radius:8px;border:1px solid #3b4963;background:transparent;color:#cbd5e1;cursor:pointer;">പിന്നോട്ട്</button>
+        <button id="dq-submit-btn" type="button" style="padding:9px 18px;border-radius:8px;border:none;background:#dc2626;color:#fff;font-weight:700;cursor:pointer;">ഉത്തരം നൽകുക</button>
       </div>
     </div>
   `;
@@ -162,6 +111,29 @@ const dqFeedback = questionModal.querySelector("#dq-feedback") || document.getEl
 const dqBackBtn = questionModal.querySelector("#dq-back-btn") || document.getElementById("puzzle-close-btn");
 const dqSubmitBtn = questionModal.querySelector("#dq-submit-btn") || document.getElementById("puzzle-submit-btn");
 
+// Jumpscare blood-red flash & shock banner
+const jumpscareFlash = document.createElement("div");
+jumpscareFlash.style.cssText = [
+  "position: fixed",
+  "inset: 0",
+  "z-index: 50",
+  "pointer-events: none",
+  "display: none",
+  "background: radial-gradient(circle, rgba(220,20,20,0.18) 25%, rgba(140,0,0,0.82) 100%)",
+  "align-items: center",
+  "justify-content: center",
+  "flex-direction: column",
+  "color: #ffffff",
+  "font-family: system-ui, sans-serif",
+  "text-align: center",
+  "padding: 20px"
+].join(";");
+jumpscareFlash.innerHTML = `
+  <div style="font-size:34px;font-weight:900;letter-spacing:2px;color:#ff4d4d;text-shadow:0 0 24px #ff0000;margin-bottom:8px;">👻 YOU WERE KILLED!</div>
+  <div style="font-size:15px;color:#ffe4e6;background:rgba(0,0,0,0.65);padding:8px 16px;border-radius:8px;">തെറ്റായ ഉത്തരം! പ്രേതം ആക്രമിച്ചു — ആദ്യം മുതൽ (Door 1) വീണ്ടും തുടങ്ങുന്നു...</div>
+`;
+document.body.appendChild(jumpscareFlash);
+
 const infoBanner = document.createElement("div");
 infoBanner.style.cssText = [
   "position: fixed",
@@ -172,7 +144,7 @@ infoBanner.style.cssText = [
   "max-width: 92vw",
   "padding: 8px 14px",
   "border-radius: 9px",
-  "background: rgba(9, 16, 29, 0.88)",
+  "background: rgba(9, 16, 29, 0.9)",
   "border: 1px solid rgba(110, 231, 183, 0.45)",
   "color: #a7f3d0",
   "font-size: 13px",
@@ -190,37 +162,71 @@ function showInfoBanner(msg, color = "#a7f3d0") {
   clearTimeout(bannerTimer);
   bannerTimer = setTimeout(() => {
     infoBanner.style.display = "none";
-  }, 2400);
+  }, 2500);
 }
 
 // ==========================================
-// 3. AUDIO FEEDBACK (Web Audio API)
+// 3. HORROR & UNLOCK AUDIO (Web Audio API)
 // ==========================================
 let audioCtx = null;
-function playDoorSound(success = true) {
-  try {
-    if (!audioCtx) {
-      const AC = window.AudioContext || window.webkitAudioContext;
-      audioCtx = new AC();
-    }
-    if (audioCtx.state === "suspended") audioCtx.resume();
+function ensureAudio() {
+  if (!audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    audioCtx = new AC();
+  }
+  if (audioCtx.state === "suspended") audioCtx.resume();
+}
 
+function playUnlockSound() {
+  try {
+    ensureAudio();
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
-    osc.type = success ? "triangle" : "sawtooth";
-    osc.frequency.setValueAtTime(success ? 520 : 210, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(
-      success ? 880 : 130,
-      audioCtx.currentTime + 0.2
-    );
-
-    gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(520, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(920, audioCtx.currentTime + 0.2);
+    gain.gain.setValueAtTime(0.14, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.22);
-
     osc.connect(gain);
     gain.connect(audioCtx.destination);
     osc.start();
     osc.stop(audioCtx.currentTime + 0.23);
+  } catch (_) {}
+}
+
+function playGhostKillSound() {
+  try {
+    ensureAudio();
+    const now = audioCtx.currentTime;
+
+    // Harsh horror screech + deep sub boom
+    const screech = audioCtx.createOscillator();
+    const screechGain = audioCtx.createGain();
+    screech.type = "sawtooth";
+    screech.frequency.setValueAtTime(980, now);
+    screech.frequency.exponentialRampToValueAtTime(165, now + 0.65);
+
+    screechGain.gain.setValueAtTime(0.28, now);
+    screechGain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+
+    screech.connect(screechGain);
+    screechGain.connect(audioCtx.destination);
+    screech.start(now);
+    screech.stop(now + 0.72);
+
+    const boom = audioCtx.createOscillator();
+    const boomGain = audioCtx.createGain();
+    boom.type = "sine";
+    boom.frequency.setValueAtTime(120, now);
+    boom.frequency.exponentialRampToValueAtTime(34, now + 0.55);
+
+    boomGain.gain.setValueAtTime(0.32, now);
+    boomGain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+
+    boom.connect(boomGain);
+    boomGain.connect(audioCtx.destination);
+    boom.start(now);
+    boom.stop(now + 0.62);
   } catch (_) {}
 }
 
@@ -232,9 +238,12 @@ let sessionState = {
   sessionId: "",
   playerName: "",
   accessCode: "",
-  currentDoorIndex: 0, // 0..9 (10 doors)
+  currentDoorIndex: 0, // 0..9 (only currentDoorIndex door is shown!)
   unlockedDoors: Array(TOTAL_DOORS).fill(false),
   activeQuestionDoorIndex: null,
+  ghostAttacking: false,
+  ghostAttackTimer: 0,
+  shakeIntensity: 0,
   startTimeMs: 0,
   elapsedSeconds: 0,
   finished: false
@@ -320,7 +329,7 @@ async function tryResumeExistingSession() {
   const existingId = readPersistedSessionId();
   if (!existingId) return false;
 
-  setLoginStatus("പഴയ Hedge Maze സെഷൻ തുടരുന്നു...", false);
+  setLoginStatus("പഴയ സെഷൻ തുടരുന്നു...", false);
   try {
     const response = await fetch(RESUME_ENDPOINT, {
       method: "POST",
@@ -394,10 +403,11 @@ function setLoginStatus(msg, isError) {
 
 function updateHudDoor() {
   if (!UI.hudDoor) return;
-  const shownDoor = Math.min(sessionState.currentDoorIndex + 1, TOTAL_DOORS);
-  UI.hudDoor.textContent = sessionState.currentDoorIndex >= TOTAL_DOORS
-    ? "Centre Fountain Open!"
-    : `Door: ${shownDoor} / ${TOTAL_DOORS}`;
+  if (sessionState.currentDoorIndex >= TOTAL_DOORS) {
+    UI.hudDoor.textContent = "Final Fountain Open!";
+  } else {
+    UI.hudDoor.textContent = `Active Door: ${sessionState.currentDoorIndex + 1} / ${TOTAL_DOORS}`;
+  }
 }
 
 function startSession({ sessionId, playerName, accessCode, doorIndex, elapsedSeconds }) {
@@ -411,24 +421,27 @@ function startSession({ sessionId, playerName, accessCode, doorIndex, elapsedSec
     currentDoorIndex: safeIdx,
     unlockedDoors: Array(TOTAL_DOORS).fill(false).map((_, i) => i < safeIdx),
     activeQuestionDoorIndex: null,
+    ghostAttacking: false,
+    ghostAttackTimer: 0,
+    shakeIntensity: 0,
     startTimeMs: performance.now() - elapsedSeconds * 1000,
     elapsedSeconds,
     finished: false
   };
 
   persistSessionId(sessionId);
-  syncMazeWithSession();
+  syncMazeVisibilityAndPosition();
 
   if (UI.accessScreen) UI.accessScreen.style.display = "none";
   if (UI.winModal) UI.winModal.style.display = "none";
   if (UI.hud) UI.hud.style.display = "flex";
   if (UI.hudPlayer) UI.hudPlayer.textContent = `Player: ${playerName}`;
   updateHudDoor();
-  showInfoBanner("നടുവിലെ Centre Fountain ലക്ഷ്യമാക്കി 10 വാതിലുകളും കടന്ന് മുന്നേറുക!");
+  showInfoBanner("നിലവിലെ വാതിൽ (Door 1) മാത്രമേ ദൃശ്യമാകൂ. ശരിയായ ഉത്തരം നൽകി മുന്നേറുക!");
 }
 
 // ==========================================
-// 6. PROCEDURAL TEXTURES & ENHANCED 3D HEDGE MAZE
+// 6. PROCEDURAL TEXTURES, HEDGE MAZE, KALAKERALA ADS & HORROR GHOST
 // ==========================================
 function createHedgeTexture() {
   const canvas = document.createElement("canvas");
@@ -484,8 +497,8 @@ function createStoneGroundTexture() {
 }
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0c1624);
-scene.fog = new THREE.FogExp2(0x0c1624, 0.014);
+scene.background = new THREE.Color(0x09101c);
+scene.fog = new THREE.FogExp2(0x09101c, 0.015);
 
 const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.1, 160);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -495,20 +508,20 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 UI.canvasContainer.appendChild(renderer.domElement);
 
-// Rich lighting
-const hemiLight = new THREE.HemisphereLight(0xdff6ff, 0x2c4726, 0.95);
-scene.add(hemiLight);
+scene.add(new THREE.HemisphereLight(0xdff6ff, 0x243b20, 0.92));
 
-const sunLight = new THREE.DirectionalLight(0xfff1c9, 1.15);
+const sunLight = new THREE.DirectionalLight(0xfff1c9, 1.1);
 sunLight.position.set(22, 38, 26);
 sunLight.castShadow = true;
-sunLight.shadow.mapSize.set(1024, 1024);
 scene.add(sunLight);
 
-// Stone courtyard & green lawn border (matching hedge maze image)
+// Red horror spotlight used during ghost jumpscare
+const horrorLight = new THREE.PointLight(0xff1a1a, 0, 14);
+scene.add(horrorLight);
+
 const lawnGround = new THREE.Mesh(
   new THREE.PlaneGeometry(110, 110),
-  new THREE.MeshStandardMaterial({ color: 0x3f7d2c, roughness: 0.9 })
+  new THREE.MeshStandardMaterial({ color: 0x3b7829, roughness: 0.9 })
 );
 lawnGround.rotation.x = -Math.PI / 2;
 lawnGround.position.y = -0.06;
@@ -522,7 +535,6 @@ stonePlaza.rotation.x = -Math.PI / 2;
 stonePlaza.receiveShadow = true;
 scene.add(stonePlaza);
 
-// Hedge material & wall colliders
 const hedgeMat = new THREE.MeshStandardMaterial({
   map: createHedgeTexture(),
   roughness: 0.85,
@@ -552,7 +564,7 @@ addHedgeWall(0, -31, 64, 2.2);
 addHedgeWall(-31, 0, 2.2, 64);
 addHedgeWall(31, 0, 2.2, 64);
 
-// Winding Hedge Labyrinth Walls (single path to centre fountain + dead-end hedge pockets)
+// Winding Hedge Labyrinth Walls
 addHedgeWall(-10, 24, 18, 2.0);
 addHedgeWall(11, 24, 16, 2.0);
 addHedgeWall(-21, 15, 2.0, 18);
@@ -566,11 +578,10 @@ addHedgeWall(-12, -21, 16, 2.0);
 addHedgeWall(13, -22, 14, 2.0);
 addHedgeWall(0, -25, 2.0, 10);
 
-// Decorative Concentric Stone & Hedge Ring around Centre Fountain (x = 0, z = 0)
+// Concentric Hedge Ring around Centre Fountain
 const ringSegments = 16;
 const ringRadius = 11.5;
 for (let i = 0; i < ringSegments; i++) {
-  // Leave a narrow entry gap at South (i = 0)
   if (i === 0) continue;
   const angle = (i / ringSegments) * Math.PI * 2;
   const sx = Math.sin(angle) * ringRadius;
@@ -581,16 +592,15 @@ for (let i = 0; i < ringSegments; i++) {
   seg.castShadow = true;
   scene.add(seg);
 
-  const halfExt = 2.2;
   wallColliders.push({
-    minX: sx - halfExt,
-    maxX: sx + halfExt,
-    minZ: sz - halfExt,
-    maxZ: sz + halfExt
+    minX: sx - 2.2,
+    maxX: sx + 2.2,
+    minZ: sz - 2.2,
+    maxZ: sz + 2.2
   });
 }
 
-// Centre Fountain (Final Goal Target at x = 0, z = 0)
+// Centre Fountain (Final Goal at x = 0, z = 0)
 const fountainGroup = new THREE.Group();
 const outerBasin = new THREE.Mesh(
   new THREE.CylinderGeometry(4.2, 4.5, 0.7, 32),
@@ -692,10 +702,10 @@ addKalakeralaWallAd(-29.7, -14, Math.PI / 2);
 addKalakeralaWallAd(29.7, -14, -Math.PI / 2);
 addKalakeralaWallAd(0, -29.7, 0);
 
-// 10 Question Doors along the path to Centre Fountain
+// 10 Doors — ONLY the current active door is visible at a time!
 const lockedDoorMat = new THREE.MeshStandardMaterial({
   color: 0xd94848,
-  emissive: 0x3b0d0d,
+  emissive: 0x450d0d,
   roughness: 0.35,
   metalness: 0.25
 });
@@ -708,7 +718,6 @@ const unlockedDoorMat = new THREE.MeshStandardMaterial({
 const doorObjects = DOOR_WAYPOINTS.map((wp, idx) => {
   const doorGroup = new THREE.Group();
 
-  // Left & right stone pillars framing the door
   const pillarGeo = new THREE.BoxGeometry(0.45, 3.2, 0.65);
   const pillarMat = new THREE.MeshStandardMaterial({ color: 0x8d99ae, roughness: 0.6 });
   const leftPillar = new THREE.Mesh(pillarGeo, pillarMat);
@@ -726,6 +735,7 @@ const doorObjects = DOOR_WAYPOINTS.map((wp, idx) => {
   doorGroup.add(leftPillar, rightPillar, leafMesh);
   doorGroup.position.set(wp.x, 0, wp.z);
   doorGroup.rotation.y = wp.rotY;
+  doorGroup.visible = idx === 0;
   scene.add(doorGroup);
 
   return {
@@ -739,21 +749,67 @@ const doorObjects = DOOR_WAYPOINTS.map((wp, idx) => {
   };
 });
 
+// Detailed 3D Horror Ghost (floating spectral body, glowing red eyes, open screaming jaw, outstretched claws)
+const ghostGroup = new THREE.Group();
+const ghostBodyMat = new THREE.MeshStandardMaterial({
+  color: 0x161822,
+  emissive: 0x1a0508,
+  roughness: 0.55,
+  transparent: true,
+  opacity: 0.94
+});
+const ghostCloak = new THREE.Mesh(new THREE.ConeGeometry(0.95, 2.3, 18, 1, true), ghostBodyMat);
+ghostCloak.rotation.x = Math.PI;
+ghostCloak.position.y = 1.15;
+
+const ghostHead = new THREE.Mesh(new THREE.SphereGeometry(0.62, 20, 20), ghostBodyMat);
+ghostHead.position.y = 2.1;
+
+const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff1e1e });
+const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 10), eyeMat);
+leftEye.position.set(-0.22, 2.18, 0.54);
+const rightEye = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 10), eyeMat);
+rightEye.position.set(0.22, 2.18, 0.54);
+
+const screamMouth = new THREE.Mesh(
+  new THREE.SphereGeometry(0.18, 12, 12),
+  new THREE.MeshBasicMaterial({ color: 0x550000 })
+);
+screamMouth.scale.set(0.85, 1.35, 0.5);
+screamMouth.position.set(0, 1.9, 0.56);
+
+const armGeo = new THREE.CylinderGeometry(0.09, 0.05, 1.15, 8);
+const leftArm = new THREE.Mesh(armGeo, ghostBodyMat);
+leftArm.position.set(-0.85, 1.75, 0.25);
+leftArm.rotation.z = -0.55;
+leftArm.rotation.x = Math.PI / 3;
+
+const rightArm = new THREE.Mesh(armGeo, ghostBodyMat);
+rightArm.position.set(0.85, 1.75, 0.25);
+rightArm.rotation.z = 0.55;
+rightArm.rotation.x = Math.PI / 3;
+
+ghostGroup.add(ghostCloak, ghostHead, leftEye, rightEye, screamMouth, leftArm, rightArm);
+ghostGroup.visible = false;
+scene.add(ghostGroup);
+
 // Player state
 const playerPos = new THREE.Vector3(0, 1.6, 35);
 const PLAYER_RADIUS = 0.55;
 
-function syncMazeWithSession() {
+function syncMazeVisibilityAndPosition() {
+  // Show ONLY the next/current door (idx === currentDoorIndex), keep other doors hidden for clean optimization
   doorObjects.forEach((d, idx) => {
     const isUnlocked = Boolean(sessionState.unlockedDoors[idx]);
     d.unlocked = isUnlocked;
     d.leafMesh.position.y = isUnlocked ? -2.5 : 1.45;
     d.leafMesh.material.color.setHex(isUnlocked ? 0x2ea043 : 0xd94848);
+    d.group.visible = idx === sessionState.currentDoorIndex;
   });
 
   if (sessionState.currentDoorIndex > 0) {
-    const lastUnlocked = doorObjects[Math.min(sessionState.currentDoorIndex - 1, TOTAL_DOORS - 1)];
-    playerPos.set(lastUnlocked.x, 1.6, lastUnlocked.z - 2.2);
+    const prevDoor = doorObjects[Math.min(sessionState.currentDoorIndex - 1, TOTAL_DOORS - 1)];
+    playerPos.set(prevDoor.x, 1.6, prevDoor.z - 2.2);
   } else {
     playerPos.set(0, 1.6, 35);
   }
@@ -774,7 +830,7 @@ function collidesWithWall(x, z) {
 }
 
 function openDoorQuestionModal(doorIndex) {
-  if (!sessionState.active || sessionState.finished) return;
+  if (!sessionState.active || sessionState.finished || sessionState.ghostAttacking) return;
   if (sessionState.activeQuestionDoorIndex !== null) return;
   if (doorIndex !== sessionState.currentDoorIndex) return;
 
@@ -797,13 +853,54 @@ function openDoorQuestionModal(doorIndex) {
 function closeDoorQuestionModal() {
   sessionState.activeQuestionDoorIndex = null;
   questionModal.style.display = "none";
-  // Step slightly back so player does not immediately re-trigger modal on close
   playerPos.z += 1.1;
+}
+
+async function triggerGhostKillAndRestartFromStart() {
+  sessionState.activeQuestionDoorIndex = null;
+  questionModal.style.display = "none";
+  keys.forward = keys.backward = keys.left = keys.right = false;
+
+  sessionState.ghostAttacking = true;
+  sessionState.ghostAttackTimer = 1.25;
+  sessionState.shakeIntensity = 0.45;
+
+  // Position ghost right in front of player camera for shocking jumpscare
+  ghostGroup.visible = true;
+  ghostGroup.position.set(playerPos.x, 0.1, playerPos.z - 2.6);
+  ghostGroup.lookAt(playerPos.x, 1.5, playerPos.z);
+
+  horrorLight.position.set(playerPos.x, 2.2, playerPos.z - 1.5);
+  horrorLight.intensity = 6;
+
+  jumpscareFlash.style.display = "flex";
+  playGhostKillSound();
+
+  // Reset progress to Door 1 / Start
+  sessionState.currentDoorIndex = 0;
+  sessionState.unlockedDoors = Array(TOTAL_DOORS).fill(false);
+  sessionState.startTimeMs = performance.now();
+  sessionState.elapsedSeconds = 0;
+
+  await saveProgressToServer(false);
+}
+
+function finishGhostKillReset() {
+  sessionState.ghostAttacking = false;
+  sessionState.ghostAttackTimer = 0;
+  sessionState.shakeIntensity = 0;
+  ghostGroup.visible = false;
+  horrorLight.intensity = 0;
+  jumpscareFlash.style.display = "none";
+
+  syncMazeVisibilityAndPosition();
+  updateHudDoor();
+  showInfoBanner("👻 പ്രേതം കൊന്നു! ആദ്യ വാതിലിൽ (Door 1) നിന്ന് വീണ്ടും തുടങ്ങുന്നു!", "#ff8080");
 }
 
 async function submitDoorAnswer() {
   const idx = sessionState.activeQuestionDoorIndex;
-  if (idx === null) return;
+  if (idx === null || sessionState.ghostAttacking) return;
 
   const qData = DOOR_QUESTIONS[idx];
   const userAns = String(dqInput?.value || "").trim().toUpperCase();
@@ -820,28 +917,25 @@ async function submitDoorAnswer() {
     sessionState.activeQuestionDoorIndex = null;
     questionModal.style.display = "none";
 
+    // Reveal ONLY the next door now
+    syncMazeVisibilityAndPosition();
     updateHudDoor();
-    playDoorSound(true);
-    showInfoBanner(`🔓 Door ${idx + 1} തുറന്നു! മുന്നോട്ട് പോകുക.`);
+    playUnlockSound();
+    showInfoBanner(`🔓 Door ${idx + 1} തുറന്നു! അടുത്ത വാതിൽ തെളിഞ്ഞു.`);
     await saveProgressToServer(false);
   } else {
-    playDoorSound(false);
-    if (dqFeedback) {
-      dqFeedback.textContent = "ഉത്തരം ശരിയല്ല. വീണ്ടും ശ്രമിക്കുക!";
-    }
+    // Wrong answer -> Horror Ghost kills player & restarts from Door 1
+    await triggerGhostKillAndRestartFromStart();
   }
 }
 
 function collidesWithLockedDoor(x, z) {
-  for (const d of doorObjects) {
-    if (d.unlocked) continue;
-    const dx = x - d.x;
-    const dz = z - d.z;
-    const dist = Math.hypot(dx, dz);
-    if (dist < 1.85) {
-      openDoorQuestionModal(d.index);
-      return true;
-    }
+  const d = doorObjects[sessionState.currentDoorIndex];
+  if (!d || !d.group.visible || d.unlocked) return false;
+  const dist = Math.hypot(x - d.x, z - d.z);
+  if (dist < 1.85) {
+    openDoorQuestionModal(d.index);
+    return true;
   }
   return false;
 }
@@ -855,7 +949,7 @@ async function handleReachCentreFountain() {
   sessionState.active = false;
   infoBanner.style.display = "none";
   clearSessionId();
-  playDoorSound(true);
+  playUnlockSound();
 
   const finalTime = sessionState.elapsedSeconds.toFixed(2);
   await saveProgressToServer(true);
@@ -907,6 +1001,7 @@ window.addEventListener("pageshow", () => {
 });
 
 window.addEventListener("keydown", (e) => {
+  if (sessionState.ghostAttacking) return;
   if (sessionState.activeQuestionDoorIndex !== null) {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -931,8 +1026,15 @@ window.addEventListener("keyup", (e) => {
 
 function bindTouchBtn(el, keyName) {
   if (!el) return;
-  const press = (ev) => { ev.preventDefault(); keys[keyName] = true; };
-  const release = (ev) => { ev.preventDefault(); keys[keyName] = false; };
+  const press = (ev) => {
+    if (sessionState.ghostAttacking) return;
+    ev.preventDefault();
+    keys[keyName] = true;
+  };
+  const release = (ev) => {
+    ev.preventDefault();
+    keys[keyName] = false;
+  };
   el.addEventListener("touchstart", press, { passive: false });
   el.addEventListener("touchend", release, { passive: false });
   el.addEventListener("mousedown", press);
@@ -980,7 +1082,24 @@ function animate(now) {
   const dt = Math.min((now - lastFrameTime) / 1000, 0.1);
   lastFrameTime = now;
 
-  if (sessionState.active && !sessionState.finished) {
+  if (sessionState.ghostAttacking) {
+    sessionState.ghostAttackTimer -= dt;
+    // Lunge ghost violently toward player camera
+    const lungeProgress = Math.max(0, 1 - sessionState.ghostAttackTimer / 1.25);
+    ghostGroup.position.z = playerPos.z - 2.6 + lungeProgress * 1.9;
+    ghostGroup.position.y = Math.sin(now * 0.035) * 0.22;
+    leftArm.rotation.x = Math.PI / 3 + Math.sin(now * 0.04) * 0.35;
+    rightArm.rotation.x = Math.PI / 3 - Math.sin(now * 0.04) * 0.35;
+
+    const shakeX = (Math.random() - 0.5) * sessionState.shakeIntensity;
+    const shakeY = (Math.random() - 0.5) * sessionState.shakeIntensity;
+    camera.position.set(playerPos.x + shakeX, playerPos.y + shakeY, playerPos.z);
+    camera.lookAt(ghostGroup.position.x, 1.75, ghostGroup.position.z);
+
+    if (sessionState.ghostAttackTimer <= 0) {
+      finishGhostKillReset();
+    }
+  } else if (sessionState.active && !sessionState.finished) {
     sessionState.elapsedSeconds = (now - sessionState.startTimeMs) / 1000;
     if (UI.hudTimer) {
       UI.hudTimer.textContent = `Time: ${sessionState.elapsedSeconds.toFixed(1)}s`;
@@ -1009,7 +1128,6 @@ function animate(now) {
       camera.position.set(playerPos.x, playerPos.y, playerPos.z);
       camera.lookAt(playerPos.x, playerPos.y - 0.1, playerPos.z - 9);
 
-      // Reach Centre Fountain at (0, 0) once all 10 doors are unlocked
       const distToFountain = Math.hypot(playerPos.x - 0, playerPos.z - 0);
       if (sessionState.currentDoorIndex >= TOTAL_DOORS && distToFountain <= 4.6) {
         handleReachCentreFountain();
