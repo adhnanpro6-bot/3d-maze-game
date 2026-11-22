@@ -1,666 +1,542 @@
 // ==========================================
-// 1. GOOGLE FORM CONFIGURATION (UNCHANGED)
+// 1. CONFIGURATION
 // ==========================================
-const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdV0o2pVUFKrOtdiC4dhsplYwAj3GEpByp9tBOCy8ueBTBwXQ/formResponse";
-const ENTRY_PLAYER_NAME = "entry.1221814472";
-const ENTRY_ACCESS_CODE = "entry.1185191600";
-const ENTRY_COMPLETION_TIME = "entry.1494944407";
+const VERIFY_ENDPOINT = "/api/verify-code";
 
-// ==========================================
-// 2. 100 EXACT ACCESS CODES
-// ==========================================
-const RAW_CODES_STRING = "KKMQZN01-7842|KKMQZN02-9153|KKMQZN03-6204|KKMQZN04-5012|KKMQZN05-4657|KKMQZN06-3286|KKMQZN07-2679|KKMQZN08-9935|KKMQZN09-2424|KKMQZN10-7912|KKMQZN11-1520|KKMQZN12-1488|KKMQZN13-2535|KKMQZN14-4582|KKMQZN15-4811|KKMQZN16-9279|KKMQZN17-1434|KKMQZN18-4257|KKMQZN19-9928|KKMQZN20-7873|KKMQZN21-4611|KKMQZN22-8359|KKMQZN23-5557|KKMQZN24-1106|KKMQZN25-3615|KKMQZN26-7924|KKMQZN27-6574|KKMQZN28-5552|KKMQZN29-3547|KKMQZN30-4527|KKMQZN31-6514|KKMQZN32-2674|KKMQZN33-2519|KKMQZN34-7224|KKMQZN35-2584|KKMQZN36-6881|KKMQZN37-6635|KKMQZN38-5333|KKMQZN39-1711|KKMQZN40-8527|KKMQZN41-9785|KKMQZN42-3045|KKMQZN43-7201|KKMQZN44-2291|KKMQZN45-5803|KKMQZN46-6925|KKMQZN47-4150|KKMQZN48-2139|KKMQZN49-1750|KKMQZN50-4733|KKMQZN51-5741|KKMQZN52-2307|KKMQZN53-4814|KKMQZN54-2654|KKMQZN55-7227|KKMQZN56-5554|KKMQZN57-8428|KKMQZN58-6977|KKMQZN59-3664|KKMQZN60-7065|KKMQZN61-6820|KKMQZN62-4432|KKMQZN63-5374|KKMQZN64-2169|KKMQZN65-3803|KKMQZN66-9751|KKMQZN67-5010|KKMQZN68-3677|KKMQZN69-8573|KKMQZN70-7216|KKMQZN71-5422|KKMQZN72-4598|KKMQZN73-6313|KKMQZN74-1916|KKMQZN75-4752|KKMQZN76-1525|KKMQZN77-6168|KKMQZN78-7572|KKMQZN79-5386|KKMQZN80-2084|KKMQZN81-4456|KKMQZN82-6155|KKMQZN83-4483|KKMQZN84-9179|KKMQZN85-7482|KKMQZN86-8517|KKMQZN87-3340|KKMQZN88-5339|KKMQZN89-3287|KKMQZN90-5040|KKMQZN91-9830|KKMQZN92-5304|KKMQZN93-8019|KKMQZN94-7543|KKMQZN95-6930|KKMQZN96-4593|KKMQZN97-3266|KKMQZN98-9348|KKMQZN99-9085|KKMQZN100-4410";
-
-const VALID_ACCESS_CODES = new Set(RAW_CODES_STRING.split("|"));
-
-let currentPlayerName = "";
-let currentAccessCode = "";
-let gameStartTime = 0;
-let timerInterval = null;
-let isGameFinished = false;
-let mazeInitialized = false;
-let toastTimeout = null;
-
-// ==========================================
-// 3. VERIFY ACCESS & START GAME (ONE-TIME USE)
-// ==========================================
-async function verifyAndStartGame() {
-    const nameInput = document.getElementById("player-name").value.trim();
-    const codeInput = document.getElementById("access-code").value.trim().toUpperCase();
-    const errorMsg = document.getElementById("error-msg");
-    const startBtn = document.getElementById("start-btn");
-
-    if (!nameInput) {
-        errorMsg.innerText = "ദയവായി നിങ്ങളുടെ പേര് നൽകുക!";
-        return;
-    }
-
-    if (!VALID_ACCESS_CODES.has(codeInput)) {
-        errorMsg.innerText = "തെറ്റായ ആക്സസ് കോഡ്! നിങ്ങൾക്ക് ലഭിച്ച കൃത്യമായ കോഡ് നൽകുക.";
-        return;
-    }
-
-    startBtn.disabled = true;
-    errorMsg.innerText = "ആക്സസ് കോഡ് പരിശോധിക്കുന്നു...";
-
-    let serverChecked = false;
-    try {
-        const res = await fetch("/api/verify-code", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ code: codeInput, playerName: nameInput })
-        });
-        if (res.ok) {
-            const data = await res.json();
-            serverChecked = true;
-            if (!data.valid) {
-                startBtn.disabled = false;
-                errorMsg.innerText = data.reason === "ALREADY_USED"
-                    ? "ഈ ആക്സസ് കോഡ് ഇതിനകം ഉപയോഗിച്ചതാണ്! ഒരു കോഡ് ഒരു തവണ മാത്രമേ ഉപയോഗിക്കാൻ കഴിയൂ."
-                    : "തെറ്റായ ആക്സസ് കോഡ്! നിങ്ങൾക്ക് ലഭിച്ച കൃത്യമായ കോഡ് നൽകുക.";
-                return;
-            }
-        }
-    } catch (_) {
-        serverChecked = false;
-    }
-
-    if (!serverChecked && localStorage.getItem("used_code_" + codeInput)) {
-        startBtn.disabled = false;
-        errorMsg.innerText = "ഈ ആക്സസ് കോഡ് ഇതിനകം ഉപയോഗിച്ചതാണ്! ഒരു കോഡ് ഒരു തവണ മാത്രമേ ഉപയോഗിക്കാൻ കഴിയൂ.";
-        return;
-    }
-
-    localStorage.setItem("used_code_" + codeInput, "true");
-    startBtn.disabled = false;
-    errorMsg.innerText = "";
-
-    currentPlayerName = nameInput;
-    currentAccessCode = codeInput;
-    isGameFinished = false;
-
-    document.getElementById("access-screen").style.display = "none";
-    document.getElementById("hud-container").style.display = "block";
-    document.getElementById("game-container").style.display = "block";
-    document.getElementById("hud-player").innerText = `${currentPlayerName} (${currentAccessCode})`;
-
-    updateDoorsHud();
-    startMazeTimer();
-
-    if (!mazeInitialized) {
-        init3DMaze();
-        mazeInitialized = true;
-    } else {
-        resetMazeState();
-        animate();
-    }
-}
-
-function showToast(msg) {
-    const toast = document.getElementById("status-toast");
-    toast.innerText = msg;
-    toast.style.display = "block";
-    clearTimeout(toastTimeout);
-    toastTimeout = setTimeout(() => {
-        toast.style.display = "none";
-    }, 2600);
-}
-
-// ==========================================
-// 4. TIMER LOGIC
-// ==========================================
-function getElapsedSeconds() {
-    return (performance.now() - gameStartTime) / 1000;
-}
-
-function startMazeTimer() {
-    clearInterval(timerInterval);
-    gameStartTime = performance.now();
-    document.getElementById("hud-timer").innerText = "Time: 0.00s";
-
-    timerInterval = setInterval(() => {
-        if (!isGameFinished) {
-            const elapsed = getElapsedSeconds().toFixed(2);
-            document.getElementById("hud-timer").innerText = `Time: ${elapsed}s`;
-        }
-    }, 50);
-}
-
-// ==========================================
-// 5. 3D MAZE ENGINE & 5 SEQUENTIAL DOORS
-// ==========================================
-const MAZE_MAP = [
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1],
-    [1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
-    [1, 0, 0, 0, 2, 0, 1, 0, 0, 0, 1, 0, 1],
-    [1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1],
-    [1, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 5, 1],
-    [1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1],
-    [1, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 9, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-];
-
-const DOOR_ORDER = [2, 3, 4, 5, 6];
-
-const PUZZLES = {
-    2: {
-        order: 1,
-        tag: "DOOR 01 • TOUGH RIDDLE",
-        title: "ഒന്നാം വാതിൽ പസിൽ",
-        clue: "ഞാൻ എന്നും നിങ്ങളോടൊപ്പമുണ്ടാകും, പക്ഷേ വെളിച്ചമുള്ളപ്പോൾ മാത്രമേ എന്നെ കാണാൻ കഴിയൂ. ഇരുട്ടിൽ ഞാൻ മറയുന്നു. ഞാൻ ആരാണ്? (ഇംഗ്ലീഷിൽ ഒറ്റവാക്കിൽ ഉത്തരം നൽകുക)",
-        answer: "SHADOW",
-        unlocked: false,
-        opening: false,
-        mesh: null,
-        baseY: 1.75
-    },
-    3: {
-        order: 2,
-        tag: "DOOR 02 • TOUGH MATH",
-        title: "രണ്ടാം വാതിൽ പസിൽ",
-        clue: "1, 4, 9, 16, 25, 36, 49, 64, 81, 100, ? — ഈ ശ്രേണിയിലെ അടുത്ത സംഖ്യ ഏതാണ്?",
-        answer: "121",
-        unlocked: false,
-        opening: false,
-        mesh: null,
-        baseY: 1.75
-    },
-    4: {
-        order: 3,
-        tag: "DOOR 03 • TOUGH RIDDLE",
-        title: "മൂന്നാം വാതിൽ പസിൽ",
-        clue: "ഞാൻ വളരുമ്പോൾ ഞാൻ ചെറുതാകുന്നു (ചുരുങ്ങുന്നു). ഞാൻ ആരാണ്? (ഇംഗ്ലീഷിൽ ഒറ്റവാക്കിൽ ഉത്തരം നൽകുക)",
-        answer: "CANDLE",
-        unlocked: false,
-        opening: false,
-        mesh: null,
-        baseY: 1.75
-    },
-    5: {
-        order: 4,
-        tag: "DOOR 04 • TOUGH NUMBER LOGIC",
-        title: "നാലാം വാതിൽ പസിൽ",
-        clue: "2, 6, 12, 20, 30, 42, 56, 72, 90, 110, ? — അടുത്ത സംഖ്യ ഏതാണ്?",
-        answer: "144",
-        unlocked: false,
-        opening: false,
-        mesh: null,
-        baseY: 1.75
-    },
-    6: {
-        order: 5,
-        tag: "DOOR 05 • FINAL TOUGH GATE",
-        title: "അഞ്ചാം വാതിൽ പസിൽ",
-        clue: "എന്നിൽ നഗരങ്ങളുണ്ട് പക്ഷേ വീടുകളില്ല; കാടുകളുണ്ട് പക്ഷേ മരങ്ങളില്ല; നദികളുണ്ട് പക്ഷേ വെള്ളമില്ല. ഞാൻ ആരാണ്? (ഇംഗ്ലീഷിൽ ഒറ്റവാക്കിൽ ഉത്തരം നൽകുക)",
-        answer: "MAP",
-        unlocked: false,
-        opening: false,
-        mesh: null,
-        baseY: 1.75
-    }
+// Google Form URL-ഉം entry ID-കളും ഇവിടെ നൽകുക (വേണമെങ്കിൽ)
+const GOOGLE_FORM_CONFIG = {
+  enabled: false,
+  formResponseUrl: "https://docs.google.com/forms/d/e/YOUR_FORM_ID/formResponse",
+  entries: {
+    playerName: "entry.1111111111",
+    accessCode: "entry.2222222222",
+    completionTime: "entry.3333333333"
+  }
 };
 
-function getNextRequiredDoorId() {
-    for (const id of DOOR_ORDER) {
-        if (!PUZZLES[id].unlocked) return id;
-    }
-    return null;
+// 5 Sequential Doors & Puzzles
+const DOOR_PUZZLES = [
+  {
+    doorNumber: 1,
+    title: "Door 1 — Cipher Lock",
+    question: "What is 14 + 28?",
+    answer: "42"
+  },
+  {
+    doorNumber: 2,
+    title: "Door 2 — Sequence Gate",
+    question: "Next number in sequence: 3, 6, 12, 24, ?",
+    answer: "48"
+  },
+  {
+    doorNumber: 3,
+    title: "Door 3 — Code Word",
+    question: "Unscramble to form a game term: Z E M A",
+    answer: "MAZE"
+  },
+  {
+    doorNumber: 4,
+    title: "Door 4 — Logic Math",
+    question: "If 5x = 85, what is x?",
+    answer: "17"
+  },
+  {
+    doorNumber: 5,
+    title: "Door 5 — Final Vault",
+    question: "How many sides does a hexagon have?",
+    answer: "6"
+  }
+];
+
+// ==========================================
+// 2. DOM ELEMENTS (Matched to index.html)
+// ==========================================
+const UI = {
+  accessScreen: document.getElementById("access-screen"),
+  playerNameInput: document.getElementById("player-name"),
+  accessCodeInput: document.getElementById("access-code"),
+  startBtn: document.getElementById("start-btn"),
+  loginStatus: document.getElementById("login-status"),
+
+  hud: document.getElementById("hud"),
+  hudPlayer: document.getElementById("hud-player"),
+  hudDoor: document.getElementById("hud-door"),
+  hudTimer: document.getElementById("hud-timer"),
+  canvasContainer: document.getElementById("game-canvas") || document.body,
+
+  puzzleModal: document.getElementById("puzzle-modal"),
+  puzzleTitle: document.getElementById("puzzle-title"),
+  puzzleQuestion: document.getElementById("puzzle-question"),
+  puzzleAnswerInput: document.getElementById("puzzle-answer"),
+  puzzleSubmitBtn: document.getElementById("puzzle-submit-btn"),
+  puzzleCloseBtn: document.getElementById("puzzle-close-btn"),
+  puzzleFeedback: document.getElementById("puzzle-feedback"),
+
+  winModal: document.getElementById("win-modal"),
+  winSummary: document.getElementById("win-summary"),
+  formSubmitStatus: document.getElementById("form-submit-status"),
+  playAgainBtn: document.getElementById("play-again-btn"),
+
+  btnUp: document.getElementById("btn-up"),
+  btnDown: document.getElementById("btn-down"),
+  btnLeft: document.getElementById("btn-left"),
+  btnRight: document.getElementById("btn-right")
+};
+
+// ==========================================
+// 3. GAME STATE (No localStorage usage)
+// ==========================================
+let sessionState = {
+  active: false,
+  playerName: "",
+  accessCode: "",
+  currentDoorIndex: 0,
+  unlockedDoors: [false, false, false, false, false],
+  activePuzzleDoorIndex: null,
+  startTimeMs: 0,
+  elapsedSeconds: 0,
+  finished: false
+};
+
+const keys = {
+  forward: false,
+  backward: false,
+  left: false,
+  right: false
+};
+
+// ==========================================
+// 4. SERVER CODE VERIFICATION (Google Sheet UsedCodes)
+// ==========================================
+async function verifyAccessCode(code, playerName) {
+  const cleanCode = String(code || "").trim().toUpperCase();
+  const cleanName = String(playerName || "").trim();
+
+  if (!cleanCode) {
+    return { valid: false, reason: "EMPTY_CODE" };
+  }
+
+  try {
+    const response = await fetch(VERIFY_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: cleanCode, playerName: cleanName })
+    });
+
+    return await response.json();
+  } catch (err) {
+    console.error("Verify code error:", err);
+    return { valid: false, reason: "NETWORK_ERROR" };
+  }
 }
 
-function updateDoorsHud() {
-    const unlockedCount = DOOR_ORDER.filter(id => PUZZLES[id].unlocked).length;
-    const nextId = getNextRequiredDoorId();
-    const nextLabel = nextId ? `DOOR 0${PUZZLES[nextId].order}` : "ALL 5 DOORS OPEN";
-    document.getElementById("hud-doors").innerText = `Next Door: ${nextLabel} (${unlockedCount} / 5)`;
-}
+async function handleStartGame() {
+  const playerName = String(UI.playerNameInput?.value || "").trim();
+  const code = String(UI.accessCodeInput?.value || "").trim().toUpperCase();
 
-let scene, camera, renderer;
-const CELL_SIZE = 4;
-let playerPos = { x: CELL_SIZE, z: CELL_SIZE };
-let playerYaw = 0;
-const keys = {};
-let activeDoorId = null;
-let isPuzzleOpen = false;
-let animFrameId = null;
+  if (!playerName) {
+    setLoginStatus("ദയവായി പേര് നൽകുക.", true);
+    return;
+  }
+  if (!code) {
+    setLoginStatus("ദയവായി ആക്സസ് കോഡ് നൽകുക.", true);
+    return;
+  }
 
-function resetMazeState() {
-    playerPos = { x: CELL_SIZE, z: CELL_SIZE };
-    playerYaw = 0;
-    activeDoorId = null;
-    isPuzzleOpen = false;
-    document.getElementById("door-prompt").style.display = "none";
-    document.getElementById("puzzle-modal").style.display = "none";
-    document.getElementById("status-toast").style.display = "none";
+  if (UI.startBtn) UI.startBtn.disabled = true;
+  setLoginStatus("ആക്സസ് കോഡ് പരിശോധിക്കുന്നു...", false);
 
-    DOOR_ORDER.forEach((id) => {
-        const p = PUZZLES[id];
-        p.unlocked = false;
-        p.opening = false;
-        if (p.mesh) {
-            p.mesh.position.y = p.baseY;
-            p.mesh.visible = true;
-            p.mesh.material.color.setHex(id === 2 ? 0xff9800 : 0x546e7a);
-        }
-    });
-    updateDoorsHud();
-}
+  const result = await verifyAccessCode(code, playerName);
 
-function init3DMaze() {
-    const container = document.getElementById("game-container");
-    container.innerHTML = "";
+  if (UI.startBtn) UI.startBtn.disabled = false;
 
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x050811);
-    scene.fog = new THREE.Fog(0x050811, 1.5, 20);
-
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 120);
-    camera.position.set(playerPos.x, 1.7, playerPos.z);
-
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    container.appendChild(renderer.domElement);
-
-    const ambientLight = new THREE.AmbientLight(0x90a4ae, 0.35);
-    scene.add(ambientLight);
-
-    const playerLight = new THREE.PointLight(0x00e676, 1.25, 13);
-    camera.add(playerLight);
-    scene.add(camera);
-
-    const floorGeo = new THREE.PlaneGeometry(90, 90);
-    const floorMat = new THREE.MeshStandardMaterial({ color: 0x0f1420, roughness: 0.9 });
-    const floor = new THREE.Mesh(floorGeo, floorMat);
-    floor.rotation.x = -Math.PI / 2;
-    scene.add(floor);
-
-    const wallGeo = new THREE.BoxGeometry(CELL_SIZE, 3.8, CELL_SIZE);
-    const wallMat = new THREE.MeshStandardMaterial({ color: 0x1a2547, roughness: 0.7 });
-    const exitMat = new THREE.MeshStandardMaterial({ color: 0x00e676, emissive: 0x00a844 });
-
-    for (let row = 0; row < MAZE_MAP.length; row++) {
-        for (let col = 0; col < MAZE_MAP[row].length; col++) {
-            const cell = MAZE_MAP[row][col];
-            const posX = col * CELL_SIZE;
-            const posZ = row * CELL_SIZE;
-
-            if (cell === 1) {
-                const wall = new THREE.Mesh(wallGeo, wallMat);
-                wall.position.set(posX, 1.9, posZ);
-                scene.add(wall);
-            } else if (PUZZLES[cell]) {
-                const doorColor = cell === 2 ? 0xff9800 : 0x546e7a;
-                const doorMat = new THREE.MeshStandardMaterial({
-                    color: doorColor,
-                    emissive: 0x1c1400,
-                    roughness: 0.45
-                });
-                const door = new THREE.Mesh(wallGeo, doorMat);
-                door.position.set(posX, PUZZLES[cell].baseY, posZ);
-                scene.add(door);
-                PUZZLES[cell].mesh = door;
-            } else if (cell === 9) {
-                const exitGoal = new THREE.Mesh(new THREE.BoxGeometry(2.2, 3.2, 2.2), exitMat);
-                exitGoal.position.set(posX, 1.6, posZ);
-                scene.add(exitGoal);
-            }
-        }
-    }
-
-    window.addEventListener("keydown", (e) => {
-        keys[e.code] = true;
-
-        if (isPuzzleOpen && e.code === "Enter") {
-            e.preventDefault();
-            checkPuzzleAnswer();
-            return;
-        }
-
-        if (isPuzzleOpen && e.code === "Escape") {
-            e.preventDefault();
-            closePuzzleModal();
-            return;
-        }
-
-        if (e.code === "Space" && activeDoorId && !isPuzzleOpen && !isGameFinished) {
-            e.preventDefault();
-            tryOpenDoor(activeDoorId);
-        }
-    });
-
-    window.addEventListener("keyup", (e) => {
-        keys[e.code] = false;
-    });
-
-    document.getElementById("door-prompt").addEventListener("click", () => {
-        if (activeDoorId && !isPuzzleOpen && !isGameFinished) {
-            tryOpenDoor(activeDoorId);
-        }
-    });
-
-    document.querySelectorAll(".touch-btn").forEach((btn) => {
-        const keyCode = btn.getAttribute("data-key");
-
-        const pressKey = (e) => {
-            e.preventDefault();
-            keys[keyCode] = true;
-        };
-
-        const releaseKey = (e) => {
-            e.preventDefault();
-            keys[keyCode] = false;
-        };
-
-        btn.addEventListener("touchstart", pressKey, { passive: false });
-        btn.addEventListener("touchend", releaseKey, { passive: false });
-        btn.addEventListener("touchcancel", releaseKey, { passive: false });
-        btn.addEventListener("mousedown", pressKey);
-        btn.addEventListener("mouseup", releaseKey);
-        btn.addEventListener("mouseleave", releaseKey);
-    });
-
-    let lastTouchX = null;
-    container.addEventListener("touchstart", (e) => {
-        if (e.touches.length === 1) {
-            lastTouchX = e.touches[0].clientX;
-        }
-    }, { passive: true });
-
-    container.addEventListener("touchmove", (e) => {
-        if (e.touches.length === 1 && lastTouchX !== null && !isPuzzleOpen && !isGameFinished) {
-            e.preventDefault();
-            const currentX = e.touches[0].clientX;
-            const deltaX = currentX - lastTouchX;
-            lastTouchX = currentX;
-            playerYaw -= deltaX * 0.008;
-        }
-    }, { passive: false });
-
-    container.addEventListener("touchend", () => {
-        lastTouchX = null;
-    }, { passive: true });
-
-    let isDragging = false;
-    window.addEventListener("mousedown", (e) => {
-        if (e.target.closest(".touch-btn")) return;
-        isDragging = true;
-    });
-    window.addEventListener("mouseup", () => {
-        isDragging = false;
-    });
-    window.addEventListener("mousemove", (e) => {
-        if (isDragging && !isPuzzleOpen && !isGameFinished) {
-            playerYaw -= e.movementX * 0.005;
-        }
-    });
-
-    window.addEventListener("resize", () => {
-        if (!camera || !renderer) return;
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-        renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-
-    animate();
-}
-
-function tryOpenDoor(doorId) {
-    const nextRequired = getNextRequiredDoorId();
-    if (doorId !== nextRequired) {
-        const reqOrder = PUZZLES[nextRequired].order;
-        showToast(`ആദ്യം DOOR 0${reqOrder} തുറക്കുക! ക്രമത്തിൽ മാത്രമേ വാതിലുകൾ തുറക്കാൻ കഴിയൂ.`);
-        return;
-    }
-    openPuzzleModal(doorId);
-}
-
-function animateDoors() {
-    DOOR_ORDER.forEach((id) => {
-        const p = PUZZLES[id];
-        if (p.opening && p.mesh) {
-            p.mesh.position.y += 0.12;
-            if (p.mesh.position.y >= 5.8) {
-                p.opening = false;
-                p.mesh.visible = false;
-            }
-        }
-    });
-}
-
-function animate() {
-    if (isGameFinished) return;
-    animFrameId = requestAnimationFrame(animate);
-
-    if (!isPuzzleOpen) {
-        updatePlayerMovement();
-    }
-
-    animateDoors();
-
-    camera.position.set(playerPos.x, 1.7, playerPos.z);
-    camera.rotation.y = playerYaw;
-    renderer.render(scene, camera);
-    drawMinimap();
-}
-
-function updatePlayerMovement() {
-    const moveSpeed = 0.08;
-    const rotSpeed = 0.04;
-
-    if (keys["KeyQ"] || keys["ArrowLeft"]) playerYaw += rotSpeed;
-    if (keys["KeyE"] || keys["ArrowRight"]) playerYaw -= rotSpeed;
-
-    let dx = 0;
-    let dz = 0;
-
-    if (keys["KeyW"] || keys["ArrowUp"]) {
-        dx -= Math.sin(playerYaw) * moveSpeed;
-        dz -= Math.cos(playerYaw) * moveSpeed;
-    }
-    if (keys["KeyS"] || keys["ArrowDown"]) {
-        dx += Math.sin(playerYaw) * moveSpeed;
-        dz += Math.cos(playerYaw) * moveSpeed;
-    }
-    if (keys["KeyA"]) {
-        dx -= Math.cos(playerYaw) * moveSpeed;
-        dz += Math.sin(playerYaw) * moveSpeed;
-    }
-    if (keys["KeyD"]) {
-        dx += Math.cos(playerYaw) * moveSpeed;
-        dz -= Math.sin(playerYaw) * moveSpeed;
-    }
-
-    const nextX = playerPos.x + dx;
-    const nextZ = playerPos.z + dz;
-
-    if (!checkCollision(nextX, playerPos.z)) playerPos.x = nextX;
-    if (!checkCollision(playerPos.x, nextZ)) playerPos.z = nextZ;
-
-    checkNearbyInteractables();
-}
-
-function checkCollision(x, z) {
-    const padding = 0.65;
-    const points = [
-        { x: x - padding, z: z - padding },
-        { x: x + padding, z: z - padding },
-        { x: x - padding, z: z + padding },
-        { x: x + padding, z: z + padding }
-    ];
-
-    for (const p of points) {
-        const col = Math.round(p.x / CELL_SIZE);
-        const row = Math.round(p.z / CELL_SIZE);
-        const cell = MAZE_MAP[row]?.[col];
-
-        if (cell === 1) return true;
-        if (PUZZLES[cell] && !PUZZLES[cell].unlocked) return true;
-    }
-    return false;
-}
-
-function checkNearbyInteractables() {
-    const col = Math.round(playerPos.x / CELL_SIZE);
-    const row = Math.round(playerPos.z / CELL_SIZE);
-
-    if (MAZE_MAP[row]?.[col] === 9) {
-        completeMazeGame();
-        return;
-    }
-
-    const dirs = [[0, 1], [0, -1], [1, 0], [-1, 0], [0, 0]];
-    let foundDoor = null;
-
-    for (const [dr, dc] of dirs) {
-        const cell = MAZE_MAP[row + dr]?.[col + dc];
-        if (PUZZLES[cell] && !PUZZLES[cell].unlocked) {
-            foundDoor = cell;
-            break;
-        }
-    }
-
-    activeDoorId = foundDoor;
-    const promptEl = document.getElementById("door-prompt");
-    if (foundDoor) {
-        const nextRequired = getNextRequiredDoorId();
-        const reqOrder = PUZZLES[nextRequired].order;
-        promptEl.innerHTML = foundDoor === nextRequired
-            ? `വാതിൽ പൂട്ടിയിരിക്കുന്നു! പസിൽ തുറക്കാൻ <b>SPACE</b> അല്ലെങ്കിൽ <b>TAP</b> ചെയ്യുക`
-            : `ആദ്യം <b>DOOR 0${reqOrder}</b> തുറക്കുക (ലോക്ക്ഡ്)`;
-        promptEl.style.display = "block";
+  if (!result || !result.valid) {
+    if (result?.reason === "ALREADY_USED") {
+      setLoginStatus("ഈ ആക്സസ് കോഡ് ഇതിനകം ഉപയോഗിച്ചു കഴിഞ്ഞു.", true);
+    } else if (result?.reason === "INVALID_CODE") {
+      setLoginStatus("തെറ്റായ ആക്സസ് കോഡ്.", true);
     } else {
-        promptEl.style.display = "none";
+      setLoginStatus("സെർവർ കണക്ട് ചെയ്യാൻ കഴിഞ്ഞില്ല. വീണ്ടും ശ്രമിക്കുക.", true);
     }
+    return;
+  }
+
+  setLoginStatus("", false);
+  startNewSession(playerName, code);
 }
 
-function drawMinimap() {
-    const canvas = document.getElementById("minimap");
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+function setLoginStatus(msg, isError) {
+  if (!UI.loginStatus) return;
+  UI.loginStatus.textContent = msg;
+  UI.loginStatus.style.color = isError ? "#ff6b6b" : "#7ee787";
+}
 
-    const rows = MAZE_MAP.length;
-    const cols = MAZE_MAP[0].length;
-    const tileW = canvas.width / cols;
-    const tileH = canvas.height / rows;
-    const nextRequired = getNextRequiredDoorId();
+function startNewSession(playerName, accessCode) {
+  sessionState = {
+    active: true,
+    playerName,
+    accessCode,
+    currentDoorIndex: 0,
+    unlockedDoors: [false, false, false, false, false],
+    activePuzzleDoorIndex: null,
+    startTimeMs: performance.now(),
+    elapsedSeconds: 0,
+    finished: false
+  };
 
-    for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-            const cell = MAZE_MAP[r][c];
-            if (cell === 1) {
-                ctx.fillStyle = "#243252";
-            } else if (PUZZLES[cell]) {
-                if (PUZZLES[cell].unlocked) ctx.fillStyle = "#1b5e20";
-                else if (cell === nextRequired) ctx.fillStyle = "#ff9800";
-                else ctx.fillStyle = "#546e7a";
-            } else if (cell === 9) {
-                ctx.fillStyle = "#00e676";
-            } else {
-                ctx.fillStyle = "#0a0e17";
-            }
-            ctx.fillRect(c * tileW, r * tileH, tileW - 1, tileH - 1);
-        }
-    }
+  resetPlayerAndDoors();
 
-    const px = (playerPos.x / CELL_SIZE) * tileW;
-    const pz = (playerPos.z / CELL_SIZE) * tileH;
-    ctx.fillStyle = "#ffffff";
-    ctx.beginPath();
-    ctx.arc(px, pz, 3.8, 0, Math.PI * 2);
-    ctx.fill();
+  if (UI.accessScreen) UI.accessScreen.style.display = "none";
+  if (UI.winModal) UI.winModal.style.display = "none";
+  if (UI.hud) UI.hud.style.display = "flex";
+  if (UI.hudPlayer) UI.hudPlayer.textContent = `Player: ${playerName}`;
+  updateHudDoor();
+}
+
+function updateHudDoor() {
+  if (!UI.hudDoor) return;
+  const nextDoor = Math.min(sessionState.currentDoorIndex + 1, 5);
+  UI.hudDoor.textContent = `Door: ${nextDoor} / 5`;
 }
 
 // ==========================================
-// 6. PUZZLE MODAL LOGIC
+// 5. THREE.JS 3D MAZE & 5 SEQUENTIAL DOORS
 // ==========================================
-function openPuzzleModal(doorId) {
-    isPuzzleOpen = true;
-    const puzzle = PUZZLES[doorId];
-    document.getElementById("puzzle-tag").innerText = puzzle.tag;
-    document.getElementById("puzzle-title").innerText = puzzle.title;
-    document.getElementById("puzzle-clue").innerText = puzzle.clue;
-    document.getElementById("puzzle-answer").value = "";
-    document.getElementById("puzzle-error").innerText = "";
-    document.getElementById("puzzle-modal").style.display = "flex";
-    setTimeout(() => document.getElementById("puzzle-answer").focus(), 50);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0b1020);
+scene.fog = new THREE.Fog(0x0b1020, 12, 36);
+
+const camera = new THREE.PerspectiveCamera(
+  70,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  100
+);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+UI.canvasContainer.appendChild(renderer.domElement);
+
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
+scene.add(ambientLight);
+
+const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+dirLight.position.set(10, 20, 10);
+scene.add(dirLight);
+
+const floorGeo = new THREE.PlaneGeometry(24, 64);
+const floorMat = new THREE.MeshStandardMaterial({ color: 0x162038, roughness: 0.8 });
+const floor = new THREE.Mesh(floorGeo, floorMat);
+floor.rotation.x = -Math.PI / 2;
+floor.position.set(0, 0, -24);
+scene.add(floor);
+
+const wallMat = new THREE.MeshStandardMaterial({ color: 0x293b66, roughness: 0.6 });
+const lockedDoorMat = new THREE.MeshStandardMaterial({ color: 0xd94848, roughness: 0.4 });
+
+const wallColliders = [];
+const doorObjects = [];
+
+function addWall(x, y, z, w, h, d) {
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
+  mesh.position.set(x, y, z);
+  scene.add(mesh);
+  wallColliders.push({
+    minX: x - w / 2,
+    maxX: x + w / 2,
+    minZ: z - d / 2,
+    maxZ: z + d / 2
+  });
+}
+
+addWall(-6, 1.5, -24, 1, 3, 64);
+addWall(6, 1.5, -24, 1, 3, 64);
+addWall(0, 1.5, 8, 13, 3, 1);
+
+const doorZPositions = [-6, -16, -26, -36, -46];
+
+doorZPositions.forEach((zPos, idx) => {
+  addWall(-3.75, 1.5, zPos, 4.5, 3, 0.8);
+  addWall(3.75, 1.5, zPos, 4.5, 3, 0.8);
+
+  const doorMesh = new THREE.Mesh(
+    new THREE.BoxGeometry(3, 2.8, 0.4),
+    lockedDoorMat.clone()
+  );
+  doorMesh.position.set(0, 1.4, zPos);
+  scene.add(doorMesh);
+
+  doorObjects.push({
+    index: idx,
+    z: zPos,
+    mesh: doorMesh,
+    unlocked: false
+  });
+});
+
+const goalMesh = new THREE.Mesh(
+  new THREE.CylinderGeometry(1.6, 1.6, 0.2, 24),
+  new THREE.MeshStandardMaterial({ color: 0xffd166, emissive: 0x553c00 })
+);
+goalMesh.position.set(0, 0.1, -54);
+scene.add(goalMesh);
+
+const playerPos = new THREE.Vector3(0, 1.6, 4);
+const PLAYER_RADIUS = 0.55;
+
+function resetPlayerAndDoors() {
+  playerPos.set(0, 1.6, 4);
+  camera.position.copy(playerPos);
+  camera.lookAt(0, 1.5, -10);
+
+  doorObjects.forEach((d) => {
+    d.unlocked = false;
+    d.mesh.position.y = 1.4;
+    d.mesh.material.color.setHex(0xd94848);
+  });
+}
+
+function collidesWithWall(x, z) {
+  for (const w of wallColliders) {
+    const closestX = Math.max(w.minX, Math.min(x, w.maxX));
+    const closestZ = Math.max(w.minZ, Math.min(z, w.maxZ));
+    const dx = x - closestX;
+    const dz = z - closestZ;
+    if (dx * dx + dz * dz < PLAYER_RADIUS * PLAYER_RADIUS) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function collidesWithLockedDoor(x, z) {
+  for (const d of doorObjects) {
+    if (d.unlocked) continue;
+    const minX = -1.5;
+    const maxX = 1.5;
+    const minZ = d.z - 0.35;
+    const maxZ = d.z + 0.35;
+
+    const closestX = Math.max(minX, Math.min(x, maxX));
+    const closestZ = Math.max(minZ, Math.min(z, maxZ));
+    const dx = x - closestX;
+    const dz = z - closestZ;
+
+    if (dx * dx + dz * dz < PLAYER_RADIUS * PLAYER_RADIUS) {
+      openPuzzleForDoor(d.index);
+      return true;
+    }
+  }
+  return false;
+}
+
+// ==========================================
+// 6. PUZZLE MODAL & DOOR UNLOCKING
+// ==========================================
+function openPuzzleForDoor(doorIndex) {
+  if (!sessionState.active || sessionState.finished) return;
+  if (sessionState.activePuzzleDoorIndex !== null) return;
+  if (doorIndex !== sessionState.currentDoorIndex) return;
+
+  const puzzle = DOOR_PUZZLES[doorIndex];
+  if (!puzzle) return;
+
+  sessionState.activePuzzleDoorIndex = doorIndex;
+  keys.forward = keys.backward = keys.left = keys.right = false;
+
+  if (UI.puzzleTitle) UI.puzzleTitle.textContent = puzzle.title;
+  if (UI.puzzleQuestion) UI.puzzleQuestion.textContent = puzzle.question;
+  if (UI.puzzleAnswerInput) {
+    UI.puzzleAnswerInput.value = "";
+    setTimeout(() => UI.puzzleAnswerInput.focus(), 50);
+  }
+  if (UI.puzzleFeedback) UI.puzzleFeedback.textContent = "";
+  if (UI.puzzleModal) UI.puzzleModal.style.display = "flex";
 }
 
 function closePuzzleModal() {
-    isPuzzleOpen = false;
-    document.getElementById("puzzle-modal").style.display = "none";
+  sessionState.activePuzzleDoorIndex = null;
+  if (UI.puzzleModal) UI.puzzleModal.style.display = "none";
 }
 
-function checkPuzzleAnswer() {
-    if (!activeDoorId) return;
-    const userAns = document.getElementById("puzzle-answer").value.trim().toUpperCase();
-    const puzzle = PUZZLES[activeDoorId];
+function submitPuzzleAnswer() {
+  const idx = sessionState.activePuzzleDoorIndex;
+  if (idx === null) return;
 
-    if (userAns === puzzle.answer) {
-        puzzle.unlocked = true;
-        puzzle.opening = true;
-        updateDoorsHud();
+  const puzzle = DOOR_PUZZLES[idx];
+  const userAns = String(UI.puzzleAnswerInput?.value || "").trim().toUpperCase();
+  const expectedAns = String(puzzle.answer || "").trim().toUpperCase();
 
-        const nextId = getNextRequiredDoorId();
-        if (nextId && PUZZLES[nextId]?.mesh) {
-            PUZZLES[nextId].mesh.material.color.setHex(0xff9800);
-        }
+  if (userAns === expectedAns) {
+    const door = doorObjects[idx];
+    door.unlocked = true;
+    door.mesh.position.y = -2.0;
+    door.mesh.material.color.setHex(0x2ea043);
 
-        closePuzzleModal();
-        document.getElementById("door-prompt").style.display = "none";
-        activeDoorId = null;
-    } else {
-        document.getElementById("puzzle-error").innerText = "തെറ്റായ ഉത്തരം! ക്ലൂ വീണ്ടും വായിച്ച് ശ്രമിക്കുക.";
-    }
+    sessionState.unlockedDoors[idx] = true;
+    sessionState.currentDoorIndex = idx + 1;
+    updateHudDoor();
+    closePuzzleModal();
+  } else if (UI.puzzleFeedback) {
+    UI.puzzleFeedback.textContent = "ഉത്തരം ശരിയല്ല. വീണ്ടും ശ്രമിക്കുക!";
+    UI.puzzleFeedback.style.color = "#ff6b6b";
+  }
 }
 
 // ==========================================
-// 7. COMPLETE GAME & SEND DATA TO GOOGLE FORM
+// 7. WIN & GOOGLE FORM SUBMISSION
 // ==========================================
-function completeMazeGame() {
-    if (isGameFinished) return;
-    isGameFinished = true;
-    clearInterval(timerInterval);
-    if (animFrameId) cancelAnimationFrame(animFrameId);
+async function handleGameWin() {
+  if (sessionState.finished) return;
+  sessionState.finished = true;
+  sessionState.active = false;
 
-    const finalSeconds = getElapsedSeconds().toFixed(2);
-    const formattedTime = `${finalSeconds} seconds`;
+  const finalTime = sessionState.elapsedSeconds.toFixed(2);
+  if (UI.hud) UI.hud.style.display = "none";
+  if (UI.winSummary) {
+    UI.winSummary.textContent = `അഭിനന്ദനങ്ങൾ ${sessionState.playerName}! എല്ലാ 5 വാതിലുകളും പൂർത്തിയാക്കിയ സമയം: ${finalTime}s`;
+  }
+  if (UI.winModal) UI.winModal.style.display = "flex";
 
-    localStorage.setItem("used_code_" + currentAccessCode, "true");
+  if (GOOGLE_FORM_CONFIG.enabled && GOOGLE_FORM_CONFIG.formResponseUrl) {
+    if (UI.formSubmitStatus) UI.formSubmitStatus.textContent = "സ്കോർ Google Form-ലേക്ക് അയക്കുന്നു...";
+    try {
+      const formData = new URLSearchParams();
+      if (GOOGLE_FORM_CONFIG.entries.playerName) {
+        formData.append(GOOGLE_FORM_CONFIG.entries.playerName, sessionState.playerName);
+      }
+      if (GOOGLE_FORM_CONFIG.entries.accessCode) {
+        formData.append(GOOGLE_FORM_CONFIG.entries.accessCode, sessionState.accessCode);
+      }
+      if (GOOGLE_FORM_CONFIG.entries.completionTime) {
+        formData.append(GOOGLE_FORM_CONFIG.entries.completionTime, `${finalTime} seconds`);
+      }
 
-    document.getElementById("hud-container").style.display = "none";
-    document.getElementById("game-container").style.display = "none";
-    document.getElementById("win-screen").style.display = "flex";
-    document.getElementById("final-time-text").innerText = `${currentPlayerName}, നിങ്ങൾ ${formattedTime} കൊണ്ട് 5 വാതിലുകളും കടന്ന് പുറത്തെത്തി!`;
-
-    sendTimeToGoogleForm(currentPlayerName, currentAccessCode, formattedTime);
-}
-
-function sendTimeToGoogleForm(name, code, time) {
-    const statusEl = document.getElementById("save-status");
-    const formData = new URLSearchParams();
-
-    formData.append(ENTRY_PLAYER_NAME, name);
-    formData.append(ENTRY_ACCESS_CODE, code);
-    formData.append(ENTRY_COMPLETION_TIME, time);
-
-    fetch(GOOGLE_FORM_URL, {
+      await fetch(GOOGLE_FORM_CONFIG.formResponseUrl, {
         method: "POST",
         mode: "no-cors",
-        body: formData
-    })
-    .then(() => {
-        statusEl.innerText = "വിജയിച്ചു! നിങ്ങളുടെ സമയം Google Sheet-ൽ രേഖപ്പെടുത്തിയിട്ടുണ്ട്.";
-        statusEl.style.color = "#00e676";
-    })
-    .catch((err) => {
-        console.error("Google Form Submission Error:", err);
-        statusEl.innerText = "സമയം സേവ് ചെയ്യുന്നതിൽ പിശക് സംഭവിച്ചു. ഇന്റർനെറ്റ് പരിശോധിക്കുക.";
-        statusEl.style.color = "#ff5252";
-    });
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: formData.toString()
+      });
+
+      if (UI.formSubmitStatus) {
+        UI.formSubmitStatus.textContent = "സമയം Google Form-ൽ രേഖപ്പെടുത്തി.";
+      }
+    } catch (err) {
+      console.error("Google Form submit error:", err);
+      if (UI.formSubmitStatus) {
+        UI.formSubmitStatus.textContent = "Form സബ്മിഷനിൽ പിശക് സംഭവിച്ചു.";
+      }
+    }
+  }
 }
+
+// ==========================================
+// 8. CONTROLS
+// ==========================================
+window.addEventListener("keydown", (e) => {
+  if (sessionState.activePuzzleDoorIndex !== null) {
+    if (e.key === "Enter") submitPuzzleAnswer();
+    return;
+  }
+  if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") keys.forward = true;
+  if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") keys.backward = true;
+  if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") keys.left = true;
+  if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") keys.right = true;
+});
+
+window.addEventListener("keyup", (e) => {
+  if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") keys.forward = false;
+  if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") keys.backward = false;
+  if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") keys.left = false;
+  if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") keys.right = false;
+});
+
+function bindTouchBtn(el, keyName) {
+  if (!el) return;
+  const press = (ev) => {
+    ev.preventDefault();
+    keys[keyName] = true;
+  };
+  const release = (ev) => {
+    ev.preventDefault();
+    keys[keyName] = false;
+  };
+  el.addEventListener("touchstart", press, { passive: false });
+  el.addEventListener("touchend", release, { passive: false });
+  el.addEventListener("mousedown", press);
+  el.addEventListener("mouseup", release);
+  el.addEventListener("mouseleave", release);
+}
+
+bindTouchBtn(UI.btnUp, "forward");
+bindTouchBtn(UI.btnDown, "backward");
+bindTouchBtn(UI.btnLeft, "left");
+bindTouchBtn(UI.btnRight, "right");
+
+if (UI.startBtn) UI.startBtn.addEventListener("click", handleStartGame);
+if (UI.puzzleSubmitBtn) UI.puzzleSubmitBtn.addEventListener("click", submitPuzzleAnswer);
+if (UI.puzzleCloseBtn) UI.puzzleCloseBtn.addEventListener("click", closePuzzleModal);
+if (UI.playAgainBtn) {
+  UI.playAgainBtn.addEventListener("click", () => {
+    window.location.reload();
+  });
+}
+
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ==========================================
+// 9. MAIN LOOP
+// ==========================================
+let lastFrameTime = performance.now();
+
+function animate(now) {
+  requestAnimationFrame(animate);
+  const dt = Math.min((now - lastFrameTime) / 1000, 0.1);
+  lastFrameTime = now;
+
+  if (sessionState.active && !sessionState.finished) {
+    sessionState.elapsedSeconds = (now - sessionState.startTimeMs) / 1000;
+    if (UI.hudTimer) {
+      UI.hudTimer.textContent = `Time: ${sessionState.elapsedSeconds.toFixed(1)}s`;
+    }
+
+    if (sessionState.activePuzzleDoorIndex === null) {
+      const moveSpeed = 6.5 * dt;
+      let moveX = 0;
+      let moveZ = 0;
+
+      if (keys.forward) moveZ -= moveSpeed;
+      if (keys.backward) moveZ += moveSpeed;
+      if (keys.left) moveX -= moveSpeed;
+      if (keys.right) moveX += moveSpeed;
+
+      const nextX = playerPos.x + moveX;
+      if (!collidesWithWall(nextX, playerPos.z) && !collidesWithLockedDoor(nextX, playerPos.z)) {
+        playerPos.x = nextX;
+      }
+
+      const nextZ = playerPos.z + moveZ;
+      if (!collidesWithWall(playerPos.x, nextZ) && !collidesWithLockedDoor(playerPos.x, nextZ)) {
+        playerPos.z = nextZ;
+      }
+
+      camera.position.set(playerPos.x, playerPos.y, playerPos.z);
+      camera.lookAt(playerPos.x, playerPos.y - 0.1, playerPos.z - 8);
+
+      if (playerPos.z <= -53.2) {
+        handleGameWin();
+      }
+    }
+  }
+
+  goalMesh.rotation.y += 1.5 * dt;
+  renderer.render(scene, camera);
+}
+
+requestAnimationFrame(animate);
