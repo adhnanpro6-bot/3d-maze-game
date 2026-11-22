@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#05070c">
+    <title>3D Maze Puzzle Challenge</title>
+    <link rel="stylesheet" href="/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <!-- 1. ACCESS GATE SCREEN -->
+    <div id="access-screen" class="overlay-screen">
+        <div class="badge hard-badge">5 TOUGH DOORS • CROSS-PLATFORM</div>
+        <h1>3D MAZE ESCAPE</h1>
+        <p>5 കഠിന പസിലുകൾ ക്രമത്തിൽ സോൾവ് ചെയ്ത് വേഗത്തിൽ പുറത്തുകടക്കുക!</p>
+
+        <input type="text" id="player-name" placeholder="നിങ്ങളുടെ പേര് (Player Name)" autocomplete="off">
+        <input type="text" id="access-code" placeholder="ആക്സസ് കോഡ് (ഉദാ: KKMQZN01-7842)" autocomplete="off">
+
+        <button id="start-btn" type="button" onclick="verifyAndStartGame()">ENTER MAZE</button>
+        <p id="error-msg"></p>
+    </div>
+
+    <!-- 2. LIVE HUD -->
+    <div id="hud-container" style="display: none;">
+        <div id="hud-top-left">
+            <div id="hud-player"></div>
+            <div id="hud-doors">Next Door: DOOR 01 (0 / 5)</div>
+            <div id="hud-controls">
+                <b>Desktop:</b> WASD / Arrows + Q E / Drag + SPACE &nbsp;|&nbsp; <b>Mobile:</b> Touch Pads
+            </div>
+        </div>
+
+        <div id="hud-timer">Time: 0.00s</div>
+
+        <canvas id="minimap" width="160" height="160"></canvas>
+        <div id="crosshair">+</div>
+
+        <div id="door-prompt" style="display: none;">
+            പൂട്ടിയ വാതിൽ! പസിൽ തുറക്കാൻ <b>SPACE</b> അല്ലെങ്കിൽ <b>TAP</b> ചെയ്യുക
+        </div>
+
+        <div id="status-toast" style="display: none;"></div>
+
+        <!-- CROSS-PLATFORM TOUCH CONTROLS (ANDROID / IOS / TOUCH SCREENS) -->
+        <div id="mobile-controls">
+            <div class="pad-group">
+                <div class="pad-label">MOVE</div>
+                <div class="dpad">
+                    <button type="button" class="touch-btn up" data-key="KeyW">▲</button>
+                    <div class="dpad-row">
+                        <button type="button" class="touch-btn left" data-key="KeyA">◀</button>
+                        <button type="button" class="touch-btn down" data-key="KeyS">▼</button>
+                        <button type="button" class="touch-btn right" data-key="KeyD">▶</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pad-group">
+                <div class="pad-label">TURN</div>
+                <div class="turn-pad">
+                    <button type="button" class="touch-btn turn-left" data-key="KeyQ">↺</button>
+                    <button type="button" class="touch-btn turn-right" data-key="KeyE">↻</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. PUZZLE MODAL -->
+    <div id="puzzle-modal" class="overlay-screen" style="display: none;">
+        <div class="puzzle-box">
+            <div id="puzzle-tag">LOCKED DOOR</div>
+            <h2 id="puzzle-title">DOOR PUZZLE</h2>
+            <p id="puzzle-clue"></p>
+            <input type="text" id="puzzle-answer" placeholder="ഉത്തരം ഇവിടെ നൽകുക..." autocomplete="off">
+            <div class="puzzle-buttons">
+                <button type="button" onclick="checkPuzzleAnswer()">UNLOCK DOOR</button>
+                <button type="button" class="cancel-btn" onclick="closePuzzleModal()">CLOSE</button>
+            </div>
+            <p id="puzzle-error"></p>
+        </div>
+    </div>
+
+    <!-- 4. 3D GAME CANVAS -->
+    <div id="game-container" style="display: none;"></div>
+
+    <!-- 5. WIN SCREEN -->
+    <div id="win-screen" class="overlay-screen" style="display: none;">
+        <div class="badge win-badge">ESCAPED!</div>
+        <h1>MAZE COMPLETED!</h1>
+        <p id="final-time-text"></p>
+        <p id="save-status">സമയം ഗൂഗിൾ ഷീറ്റിലേക്ക് സേവ് ചെയ്യുന്നു...</p>
+    </div>
+
+    <script src="/game.js"></script>
+</body>
+</html>
