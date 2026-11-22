@@ -18,7 +18,6 @@ const GOOGLE_FORM_CONFIG = {
   }
 };
 
-// 10 Questions (Maths, GK & Sports) — Each unlocks one Access Card
 const CARD_QUESTIONS = [
   { cardCode: "KK-CARD-01", category: "MATHS", question: "Card 1 (Maths): 14 + 28 എത്രയാണ്? (തെറ്റിയാൽ Ghost കൊല്ലും!)", answer: "42" },
   { cardCode: "KK-CARD-02", category: "SPORTS", question: "Card 2 (Sports): ഒരു ഫുട്ബോൾ ടീമിൽ സാധാരണയായി എത്ര കളിക്കാർ കളിക്കുന്നു?", answer: "11" },
@@ -32,7 +31,6 @@ const CARD_QUESTIONS = [
   { cardCode: "KK-CARD-10", category: "MATHS", question: "Card 10 (Maths): 9² (9 square) എത്രയാണ്?", answer: "81" }
 ];
 
-// Candidate random drop spots inside the Hedge Maze (10 will be picked randomly per run)
 const RANDOM_CARD_SPOTS = [
   { x: -24, z: 22 },
   { x: -14, z: 24 },
@@ -83,7 +81,6 @@ const UI = {
   btnRight: document.getElementById("btn-right")
 };
 
-// Smooth Turn Left / Right buttons for mobile & desktop
 const turnControlsRow = document.createElement("div");
 turnControlsRow.id = "smooth-turn-controls";
 turnControlsRow.style.cssText = [
@@ -103,7 +100,6 @@ document.body.appendChild(turnControlsRow);
 const btnTurnLeft = document.getElementById("btn-turn-left");
 const btnTurnRight = document.getElementById("btn-turn-right");
 
-// Card Question Modal
 let questionModal = document.getElementById("puzzle-modal");
 if (!questionModal) {
   questionModal = document.createElement("div");
@@ -143,7 +139,6 @@ const cqFeedback = questionModal.querySelector("#cq-feedback");
 const cqCancelBtn = questionModal.querySelector("#cq-cancel-btn");
 const cqSubmitBtn = questionModal.querySelector("#cq-submit-btn");
 
-// Centre Circle 10 Access Cards Submission Modal
 const centerVaultModal = document.createElement("div");
 centerVaultModal.id = "center-vault-modal";
 centerVaultModal.style.cssText = [
@@ -161,7 +156,7 @@ centerVaultModal.innerHTML = `
   <div style="width:100%;max-width:460px;background:#0f1b2e;border:1px solid rgba(56,189,248,0.55);border-radius:16px;padding:22px;color:#f8fafc;box-shadow:0 20px 50px rgba(0,0,0,0.8);font-family:system-ui,sans-serif;">
     <div style="font-size:12px;font-weight:800;color:#38bdf8;letter-spacing:0.6px;margin-bottom:6px;">CENTRE CIRCLE VAULT</div>
     <h3 style="margin:0 0 8px 0;font-size:18px;color:#ffffff;">10 Access Cards സമർപ്പിക്കുക</h3>
-    <p style="margin:0 0 12px 0;font-size:13px;color:#cbd5e1;line-height:1.45;">ഗെയിം പൂർത്തിയാക്കാൻ ശേഖരിച്ച 10 Access Cards ഇവിടെ നൽകി (അല്ലെങ്കിൽ താഴെ കാണുന്ന കാർഡുകൾ കൺഫേം ചെയ്ത്) Submit ചെയ്യുക:</p>
+    <p style="margin:0 0 12px 0;font-size:13px;color:#cbd5e1;line-height:1.45;">ഗെയിം പൂർത്തിയാക്കാൻ ശേഖരിച്ച 10 Access Cards ഇവിടെ നൽകി Submit ചെയ്യുക:</p>
     <textarea id="vault-cards-input" rows="3" placeholder="KK-CARD-01, KK-CARD-02, ... KK-CARD-10"
       style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:9px;border:1px solid #334e75;background:#08101c;color:#7ee787;font-size:13px;margin-bottom:10px;outline:none;"></textarea>
     <div id="vault-feedback" style="min-height:20px;font-size:13px;color:#ff6b6b;margin-bottom:10px;"></div>
@@ -178,7 +173,6 @@ const vaultFeedback = document.getElementById("vault-feedback");
 const vaultCloseBtn = document.getElementById("vault-close-btn");
 const vaultSubmitBtn = document.getElementById("vault-submit-btn");
 
-// Jumpscare Horror Overlay
 const jumpscareFlash = document.createElement("div");
 jumpscareFlash.style.cssText = [
   "position: fixed",
@@ -197,7 +191,7 @@ jumpscareFlash.style.cssText = [
 ].join(";");
 jumpscareFlash.innerHTML = `
   <div style="font-size:34px;font-weight:900;letter-spacing:2px;color:#ff4d4d;text-shadow:0 0 24px #ff0000;margin-bottom:8px;">👻 YOU WERE KILLED!</div>
-  <div style="font-size:15px;color:#ffe4e6;background:rgba(0,0,0,0.65);padding:8px 16px;border-radius:8px;">തെറ്റായ ഉത്തരം! പ്രേതം ആക്രമിച്ചു — ആദ്യം മുതൽ വീണ്ടും തുടങ്ങുന്നു...</div>
+  <div style="font-size:15px;color:#ffe4e6;background:rgba(0,0,0,0.65);padding:8px 16px;border-radius:8px;">തെറ്റായ ഉത്തരം! പ്രേതം ആക്രമിച്ചു — കാർഡുകൾ റീസ്റ്റാർട്ട് ആകുന്നു (സമയം തുടരുന്നു)...</div>
 `;
 document.body.appendChild(jumpscareFlash);
 
@@ -300,7 +294,7 @@ let sessionState = {
   sessionId: "",
   playerName: "",
   accessCode: "",
-  collectedCards: [], // Array of cardCode strings e.g. ["KK-CARD-01", ...]
+  collectedCards: [],
   activeCardIndex: null,
   vaultOpen: false,
   ghostAttacking: false,
@@ -320,7 +314,7 @@ const controls = {
   turnRight: false
 };
 
-let playerYaw = 0; // 0 faces -Z (north / toward centre)
+let playerYaw = 0;
 
 // ==========================================
 // 5. SESSION TOKEN & SERVER SYNC
@@ -421,10 +415,11 @@ async function handleContinueUsedCode() {
       return;
     }
 
+    const typedName = String(UI.playerNameInput?.value || "").trim();
     setContinueStatus("", false);
     startSession({
       sessionId: data.sessionId,
-      playerName: data.playerName || "Player",
+      playerName: typedName || data.playerName || "Player",
       accessCode: data.code || usedCode,
       savedCount: Number(data.doorIndex || 0),
       elapsedSeconds: Number(data.elapsedSeconds || 0)
@@ -641,14 +636,12 @@ function addHedgeWall(x, z, w, d, h = 3.2) {
   });
 }
 
-// Outer perimeter hedge walls with wide South opening (x = 0, z = +31)
 addHedgeWall(-17.5, 31, 28, 2.2);
 addHedgeWall(17.5, 31, 28, 2.2);
 addHedgeWall(0, -31, 64, 2.2);
 addHedgeWall(-31, 0, 2.2, 64);
 addHedgeWall(31, 0, 2.2, 64);
 
-// Open Hedge Maze corridors (no blocking doors!)
 addHedgeWall(-11, 24, 15, 2.0);
 addHedgeWall(11, 24, 15, 2.0);
 addHedgeWall(-21, 14, 2.0, 16);
@@ -661,11 +654,10 @@ addHedgeWall(21, -8, 2.0, 20);
 addHedgeWall(-12, -21, 14, 2.0);
 addHedgeWall(13, -22, 12, 2.0);
 
-// Centre Circle Ring & Fountain (x = 0, z = 0)
 const ringSegments = 16;
 const ringRadius = 11.5;
 for (let i = 0; i < ringSegments; i++) {
-  if (i === 0) continue; // South entry into Centre Circle
+  if (i === 0) continue;
   const angle = (i / ringSegments) * Math.PI * 2;
   const sx = Math.sin(angle) * ringRadius;
   const sz = Math.cos(angle) * ringRadius;
@@ -683,7 +675,6 @@ for (let i = 0; i < ringSegments; i++) {
   });
 }
 
-// Highlighted Centre Circle ring on ground
 const centreCircleRing = new THREE.Mesh(
   new THREE.RingGeometry(4.3, 5.1, 36),
   new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide })
@@ -731,7 +722,6 @@ fountainGroup.add(outerBasin, fountainWater, centerSpire, goalBeacon);
 fountainGroup.position.set(0, 0, 0);
 scene.add(fountainGroup);
 
-// KALAKERALA ARTS & SPORTS CLUB — CHELAKKADAVU Wall Advertisements
 const texLoader = new THREE.TextureLoader();
 const logoTexture = texLoader.load("/logo.png", undefined, undefined, () => {});
 
@@ -793,7 +783,6 @@ addKalakeralaWallAd(-29.7, -14, Math.PI / 2);
 addKalakeralaWallAd(29.7, -14, -Math.PI / 2);
 addKalakeralaWallAd(0, -29.7, 0);
 
-// 10 Collectible 3D Access Cards dropped randomly in the maze
 const cardMat = new THREE.MeshStandardMaterial({
   color: 0xffd166,
   emissive: 0x7a4f00,
@@ -838,7 +827,6 @@ function randomizeCardPositions() {
 
   cardObjects.forEach((c, idx) => {
     const spot = pool[idx % pool.length];
-    // Avoid spawning directly inside any wall collider
     let safeX = spot.x;
     let safeZ = spot.z;
     if (collidesWithWall(safeX, safeZ)) {
@@ -851,7 +839,6 @@ function randomizeCardPositions() {
   });
 }
 
-// Detailed 3D Horror Ghost
 const ghostGroup = new THREE.Group();
 const ghostBodyMat = new THREE.MeshStandardMaterial({
   color: 0x161822,
@@ -962,7 +949,7 @@ function collidesWithWall(x, z) {
 }
 
 // ==========================================
-// 7. CARD QUESTION, HORROR GHOST KILL & CENTRE VAULT
+// 7. CARD QUESTION, HORROR GHOST KILL (NO TIMER RESET) & CENTRE VAULT
 // ==========================================
 function openCardQuestionModal(cardIndex) {
   if (!sessionState.active || sessionState.finished || sessionState.ghostAttacking || sessionState.vaultOpen) return;
@@ -987,7 +974,6 @@ function openCardQuestionModal(cardIndex) {
 function closeCardQuestionModal() {
   sessionState.activeCardIndex = null;
   questionModal.style.display = "none";
-  // Step slightly back so modal does not re-trigger immediately
   playerPos.x += Math.sin(playerYaw) * 1.2;
   playerPos.z += Math.cos(playerYaw) * 1.2;
 }
@@ -1016,10 +1002,8 @@ async function triggerGhostKillAndRestart() {
   jumpscareFlash.style.display = "flex";
   playGhostKillSound();
 
-  // Reset all collected cards & timer to start
+  // Reset collected cards only; keep startTimeMs / total completion timer running continuously!
   sessionState.collectedCards = [];
-  sessionState.startTimeMs = performance.now();
-  sessionState.elapsedSeconds = 0;
 
   await saveProgressToServer(false);
 }
@@ -1034,7 +1018,7 @@ function finishGhostKillReset() {
 
   resetPlayerAndCards(0);
   updateHudCards();
-  showInfoBanner("👻 പ്രേതം കൊന്നു! 10 കാർഡുകളും വീണ്ടും മേസിൽ ചിതറിക്കിടക്കുന്നു — ആദ്യം മുതൽ തുടങ്ങുക!", "#ff8080");
+  showInfoBanner("👻 പ്രേതം കൊന്നു! കാർഡുകൾ റീസ്റ്റാർട്ട് ആയി, പക്ഷേ ഗെയിം ടൈമർ തുടർന്നുകൊണ്ടിരിക്കുന്നു!", "#ff8080");
 }
 
 async function submitCardAnswer() {
@@ -1126,7 +1110,7 @@ async function handleGameWin() {
 
   if (UI.hud) UI.hud.style.display = "none";
   if (UI.winSummary) {
-    UI.winSummary.textContent = `അഭിനന്ദനങ്ങൾ ${sessionState.playerName}! 10 Access Cards-ഉം ശേഖരിച്ച് Centre Circle പൂർത്തിയാക്കിയ സമയം: ${finalTime}s`;
+    UI.winSummary.textContent = `അഭിനന്ദനങ്ങൾ ${sessionState.playerName}! 10 Access Cards-ഉം ശേഖരിച്ച് ഗെയിം പൂർത്തിയാക്കാൻ എടുത്ത ആകെ സമയം: ${finalTime}s`;
   }
   if (UI.winModal) UI.winModal.style.display = "flex";
 
@@ -1154,7 +1138,7 @@ async function handleGameWin() {
 }
 
 // ==========================================
-// 8. SMOOTH ROTATION (KEYBOARD + DRAG + TURN BUTTONS) & SESSION HOOKS
+// 8. SMOOTH ROTATION & SESSION HOOKS
 // ==========================================
 window.addEventListener("beforeunload", (e) => {
   if (sessionState.active && !sessionState.finished) {
@@ -1228,7 +1212,6 @@ bindHoldBtn(UI.btnRight, "strafeRight");
 bindHoldBtn(btnTurnLeft, "turnLeft");
 bindHoldBtn(btnTurnRight, "turnRight");
 
-// Touch / Mouse drag on canvas for smooth camera rotation
 let isDraggingLook = false;
 let lastPointerX = 0;
 
@@ -1288,6 +1271,14 @@ function animate(now) {
   const dt = Math.min((now - lastFrameTime) / 1000, 0.1);
   lastFrameTime = now;
 
+  // Keep total game completion timer running even during ghost kill sequence
+  if (sessionState.active && !sessionState.finished) {
+    sessionState.elapsedSeconds = (now - sessionState.startTimeMs) / 1000;
+    if (UI.hudTimer) {
+      UI.hudTimer.textContent = `Time: ${sessionState.elapsedSeconds.toFixed(1)}s`;
+    }
+  }
+
   if (sessionState.ghostAttacking) {
     sessionState.ghostAttackTimer -= dt;
     const lungeProgress = Math.max(0, 1 - sessionState.ghostAttackTimer / 1.25);
@@ -1309,57 +1300,46 @@ function animate(now) {
     if (sessionState.ghostAttackTimer <= 0) {
       finishGhostKillReset();
     }
-  } else if (sessionState.active && !sessionState.finished) {
-    sessionState.elapsedSeconds = (now - sessionState.startTimeMs) / 1000;
-    if (UI.hudTimer) {
-      UI.hudTimer.textContent = `Time: ${sessionState.elapsedSeconds.toFixed(1)}s`;
+  } else if (sessionState.active && !sessionState.finished && sessionState.activeCardIndex === null && !sessionState.vaultOpen) {
+    const turnSpeed = 2.4 * dt;
+    if (controls.turnLeft) playerYaw += turnSpeed;
+    if (controls.turnRight) playerYaw -= turnSpeed;
+
+    const moveSpeed = 7.6 * dt;
+    const fwdX = -Math.sin(playerYaw);
+    const fwdZ = -Math.cos(playerYaw);
+    const rightX = Math.cos(playerYaw);
+    const rightZ = -Math.sin(playerYaw);
+
+    let dx = 0;
+    let dz = 0;
+    if (controls.forward) { dx += fwdX * moveSpeed; dz += fwdZ * moveSpeed; }
+    if (controls.backward) { dx -= fwdX * moveSpeed; dz -= fwdZ * moveSpeed; }
+    if (controls.strafeLeft) { dx -= rightX * moveSpeed; dz -= rightZ * moveSpeed; }
+    if (controls.strafeRight) { dx += rightX * moveSpeed; dz += rightZ * moveSpeed; }
+
+    const nextX = playerPos.x + dx;
+    if (!collidesWithWall(nextX, playerPos.z)) playerPos.x = nextX;
+
+    const nextZ = playerPos.z + dz;
+    if (!collidesWithWall(playerPos.x, nextZ)) playerPos.z = nextZ;
+
+    updateCameraFromYaw();
+
+    for (const c of cardObjects) {
+      if (c.collected) continue;
+      const dist = Math.hypot(playerPos.x - c.x, playerPos.z - c.z);
+      if (dist <= 1.55) {
+        openCardQuestionModal(c.index);
+        break;
+      }
     }
 
-    if (sessionState.activeCardIndex === null && !sessionState.vaultOpen) {
-      // Smooth rotation
-      const turnSpeed = 2.4 * dt;
-      if (controls.turnLeft) playerYaw += turnSpeed;
-      if (controls.turnRight) playerYaw -= turnSpeed;
-
-      // Forward / backward along facing direction + strafe left/right
-      const moveSpeed = 7.6 * dt;
-      const fwdX = -Math.sin(playerYaw);
-      const fwdZ = -Math.cos(playerYaw);
-      const rightX = Math.cos(playerYaw);
-      const rightZ = -Math.sin(playerYaw);
-
-      let dx = 0;
-      let dz = 0;
-      if (controls.forward) { dx += fwdX * moveSpeed; dz += fwdZ * moveSpeed; }
-      if (controls.backward) { dx -= fwdX * moveSpeed; dz -= fwdZ * moveSpeed; }
-      if (controls.strafeLeft) { dx -= rightX * moveSpeed; dz -= rightZ * moveSpeed; }
-      if (controls.strafeRight) { dx += rightX * moveSpeed; dz += rightZ * moveSpeed; }
-
-      const nextX = playerPos.x + dx;
-      if (!collidesWithWall(nextX, playerPos.z)) playerPos.x = nextX;
-
-      const nextZ = playerPos.z + dz;
-      if (!collidesWithWall(playerPos.x, nextZ)) playerPos.z = nextZ;
-
-      updateCameraFromYaw();
-
-      // Check proximity to uncollected Access Cards
-      for (const c of cardObjects) {
-        if (c.collected) continue;
-        const dist = Math.hypot(playerPos.x - c.x, playerPos.z - c.z);
-        if (dist <= 1.55) {
-          openCardQuestionModal(c.index);
-          break;
-        }
-      }
-
-      // Check Centre Circle (0, 0) once all 10 cards are collected
-      const distToCentre = Math.hypot(playerPos.x - 0, playerPos.z - 0);
-      if (sessionState.collectedCards.length >= TOTAL_CARDS && distToCentre <= 4.8) {
-        openCentreVaultModal();
-      } else if (distToCentre <= 4.2 && sessionState.collectedCards.length < TOTAL_CARDS) {
-        showInfoBanner(`🔒 Centre Circle-ൽ 10 Access Cards വേണം! ഇപ്പോൾ ഉള്ളത്: ${sessionState.collectedCards.length} / 10`, "#ff9f43");
-      }
+    const distToCentre = Math.hypot(playerPos.x - 0, playerPos.z - 0);
+    if (sessionState.collectedCards.length >= TOTAL_CARDS && distToCentre <= 4.8) {
+      openCentreVaultModal();
+    } else if (distToCentre <= 4.2 && sessionState.collectedCards.length < TOTAL_CARDS) {
+      showInfoBanner(`🔒 Centre Circle-ൽ 10 Access Cards വേണം! ഇപ്പോൾ ഉള്ളത്: ${sessionState.collectedCards.length} / 10`, "#ff9f43");
     }
   }
 
