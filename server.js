@@ -3,7 +3,10 @@ const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const APPS_SCRIPT_URL = (process.env.APPS_SCRIPT_URL || "").trim();
+const APPS_SCRIPT_URL = (
+  process.env.APPS_SCRIPT_URL ||
+  "https://script.google.com/macros/s/AKfycbzRgBA04-hgT8OBbdakGmQ-qtVzpVos0aUn1FVN_vC7HnxNzc7LtancknqUOfoWyOvs9Q/exec"
+).trim();
 
 app.use(express.json({ limit: "2mb" }));
 app.use(express.static(path.join(__dirname, "public")));
