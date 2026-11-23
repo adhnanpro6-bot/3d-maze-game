@@ -131,7 +131,7 @@ function shuffle(list) {
   return arr;
 }
 
-/** @type {{ active: boolean, sessionId: string, playerName: string, accessCode: string, deck: TypedQuizQuestion[], index: number, score: number, correctCount: number, hintsLeft: number, timeLeft: number, totalElapsed: number, answered: boolean }} */
+/** @type {{ active: boolean, sessionId: string, playerName: string, accessCode: string, deck: TypedQuizQuestion[], index: number, score: number, correctCount: number, attemptsOnCurrent: number, hintsLeft: number, timeLeft: number, totalElapsed: number, answeredCorrectly: boolean }} */
 let state = {
   active: false,
   sessionId: "",
@@ -141,10 +141,11 @@ let state = {
   index: 0,
   score: 0,
   correctCount: 0,
+  attemptsOnCurrent: 0,
   hintsLeft: STARTING_HINTS,
   timeLeft: SECONDS_PER_QUESTION,
   totalElapsed: 0,
-  answered: false
+  answeredCorrectly: false
 };
 
 let lastFrameMs = performance.now();
@@ -162,11 +163,11 @@ function renderHud() {
   const total = state.deck.length || QUIZ_QUESTIONS.length;
   if (UI.hudPlayer) UI.hudPlayer.textContent = `Player: ${state.playerName}`;
   if (UI.hudQnum) UI.hudQnum.textContent = `Question: ${Math.min(state.index + 1, total)} / ${total}`;
-  if (UI.hudScore) UI.hudScore.textContent = `Score: ${state.score}`;
-  if (UI.hudTimer) UI.hudTimer.textContent = `Time: ${Math.max(0, state.timeLeft).toFixed(1)}s`;
+  if (UI.hudScore) UI.hudScore.textContent = `Score: ${state.score} | Total Time: ${state.totalElapsed.toFixed(1)}s`;
+  if (UI.hudTimer) UI.hudTimer.textContent = `Q Timer: ${Math.max(0, state.timeLeft).toFixed(1)}s`;
   if (UI.hintBtn) {
     UI.hintBtn.textContent = `Hint (${state.hintsLeft} left)`;
-    UI.hintBtn.disabled = state.answered || state.hintsLeft <= 0;
+    UI.hintBtn.disabled = state.answeredCorrectly || state.hintsLeft <= 0;
   }
 }
 
@@ -195,7 +196,7 @@ async function finishQuiz() {
   const total = state.deck.length;
   if (UI.resultSummary) {
     UI.resultSummary.textContent =
-      `${state.playerName}, നിങ്ങൾ ${total}-ൽ ${state.correctCount} ചോദ്യങ്ങൾക്ക് ശരി ഉത്തരം നൽകി. സ്കോർ: ${state.score} | സമയം: ${state.totalElapsed.toFixed(1)}s`;
+      `${state.playerName}, നിങ്ങൾ ${total} ചോദ്യങ്ങളും പൂർത്തിയാക്കി! ശരി ഉത്തരങ്ങൾ: ${state.correctCount} | സ്കോർ: ${state.score} | ക്വിസ് പൂർത്തിയാക്കാൻ എടുത്ത സമയം: ${state.totalElapsed.toFixed(1)}s`;
   }
   if (UI.resultSyncStatus) UI.resultSyncStatus.textContent = "ഫലം സേവ് ചെയ്യുന്നു...";
   await syncProgress(true);
@@ -206,56 +207,63 @@ function normalizeText(val) {
   return String(val || "").trim().toUpperCase().replace(/\s+/g, " ");
 }
 
-/**
- * @param {boolean} isTimeout
- */
-function evaluateTypedAnswer(isTimeout) {
-  if (!state.active || state.answered) return;
-  state.answered = true;
-
-  if (answerInputEl) answerInputEl.disabled = true;
-  if (submitAnswerBtnEl) submitAnswerBtnEl.disabled = true;
+function evaluateTypedAnswer() {
+  if (!state.active || state.answeredCorrectly) return;
 
   const q = state.deck[state.index];
   if (!q) return;
 
   const userTyped = normalizeText(answerInputEl ? answerInputEl.value : "");
   const accepted = q.answers.map((a) => normalizeText(a));
-  const isCorrect = !isTimeout && userTyped.length > 0 && accepted.includes(userTyped);
+  const isCorrect = userTyped.length > 0 && accepted.includes(userTyped);
+
+  state.attemptsOnCurrent += 1;
 
   if (isCorrect) {
+    // Only move to next question once current question is answered correctly
+    state.answeredCorrectly = true;
     state.correctCount += 1;
-    state.score += POINTS_PER_CORRECT + Math.round(state.timeLeft * 2);
+    if (answerInputEl) answerInputEl.disabled = true;
+    if (submitAnswerBtnEl) submitAnswerBtnEl.disabled = true;
+
+    const retryPenalty = Math.max(0, (state.attemptsOnCurrent - 1) * 15);
+    const gained = Math.max(25, POINTS_PER_CORRECT + Math.round(state.timeLeft * 2) - retryPenalty);
+    state.score += gained;
+
     if (UI.feedbackHeading) {
-      UI.feedbackHeading.textContent = "ശരി ഉത്തരം!";
+      UI.feedbackHeading.textContent = `ശരി ഉത്തരം! +${gained} pts (ഇനി അടുത്ത ചോദ്യത്തിലേക്ക് പോകാം)`;
       UI.feedbackHeading.style.color = "#4ade80";
     }
-  } else if (isTimeout) {
-    if (UI.feedbackHeading) {
-      UI.feedbackHeading.textContent = "സമയം കഴിഞ്ഞു (Timeout)";
-      UI.feedbackHeading.style.color = "#f87171";
+    if (UI.feedbackText) UI.feedbackText.textContent = q.explanation;
+    if (UI.nextBtn) {
+      UI.nextBtn.textContent = state.index + 1 >= state.deck.length ? "ഫലം കാണുക" : "അടുത്ത ചോദ്യം";
+      UI.nextBtn.style.display = "block";
     }
+    if (UI.feedbackPanel) UI.feedbackPanel.style.display = "block";
+    renderHud();
   } else {
+    // Unlimited life / tries: stay on same question until answered correctly
+    if (answerInputEl) {
+      answerInputEl.value = "";
+      answerInputEl.focus();
+    }
+    if (UI.feedbackPanel) UI.feedbackPanel.style.display = "block";
     if (UI.feedbackHeading) {
-      UI.feedbackHeading.textContent = `തെറ്റായ ഉത്തരം — ശരി ഉത്തരം: ${q.answers[0]}`;
+      UI.feedbackHeading.textContent = "തെറ്റായ ഉത്തരം — ലൈഫ് നഷ്ടമാകില്ല, ഈ ചോദ്യത്തിന് ശരി ഉത്തരം നൽകിയാലേ അടുത്തതിലേക്ക് പോകൂ!";
       UI.feedbackHeading.style.color = "#f87171";
     }
+    if (UI.feedbackText) UI.feedbackText.textContent = "വീണ്ടും ടൈപ്പ് ചെയ്ത് Submit ചെയ്യുക.";
+    if (UI.nextBtn) UI.nextBtn.style.display = "none";
+    renderHud();
   }
-
-  if (UI.feedbackText) UI.feedbackText.textContent = q.explanation;
-  if (UI.nextBtn) {
-    UI.nextBtn.textContent = state.index + 1 >= state.deck.length ? "ഫലം കാണുക" : "അടുത്ത ചോദ്യം";
-  }
-  if (UI.feedbackPanel) UI.feedbackPanel.style.display = "block";
-  renderHud();
 }
 
 function handleTypedSubmit() {
-  evaluateTypedAnswer(false);
+  evaluateTypedAnswer();
 }
 
 function handleHint() {
-  if (!state.active || state.answered || state.hintsLeft <= 0) return;
+  if (!state.active || state.answeredCorrectly || state.hintsLeft <= 0) return;
   const q = state.deck[state.index];
   if (!q) return;
   const primaryAns = q.answers[0] || "";
@@ -282,7 +290,8 @@ function loadQuestion() {
     return;
   }
 
-  state.answered = false;
+  state.answeredCorrectly = false;
+  state.attemptsOnCurrent = 0;
   state.timeLeft = SECONDS_PER_QUESTION;
 
   ensureTypingUi();
@@ -296,7 +305,7 @@ function loadQuestion() {
   if (UI.qCategory) UI.qCategory.textContent = q.category;
   if (UI.qPrompt) UI.qPrompt.textContent = q.prompt;
   if (UI.feedbackPanel) UI.feedbackPanel.style.display = "none";
-  if (UI.nextBtn) UI.nextBtn.style.display = "block";
+  if (UI.nextBtn) UI.nextBtn.style.display = "none";
 
   renderHud();
 }
@@ -314,10 +323,11 @@ function beginQuizSession(params) {
     index: 0,
     score: 0,
     correctCount: 0,
+    attemptsOnCurrent: 0,
     hintsLeft: STARTING_HINTS,
     timeLeft: SECONDS_PER_QUESTION,
     totalElapsed: 0,
-    answered: false
+    answeredCorrectly: false
   };
   showView("QUIZ");
   loadQuestion();
@@ -404,6 +414,7 @@ if (UI.continueBtn) {
 if (UI.hintBtn) UI.hintBtn.addEventListener("click", handleHint);
 if (UI.nextBtn) {
   UI.nextBtn.addEventListener("click", async () => {
+    if (!state.answeredCorrectly) return;
     state.index += 1;
     await syncProgress(false);
     loadQuestion();
@@ -423,13 +434,13 @@ function tick(now) {
   const dt = Math.min((now - lastFrameMs) / 1000, 0.1);
   lastFrameMs = now;
 
-  if (state.active && !state.answered) {
+  if (state.active) {
+    // Total quiz completion timer runs continuously until all 25 questions are finished
     state.totalElapsed += dt;
-    state.timeLeft = Math.max(0, state.timeLeft - dt);
-    renderHud();
-    if (state.timeLeft <= 0) {
-      evaluateTypedAnswer(true);
+    if (!state.answeredCorrectly) {
+      state.timeLeft = Math.max(0, state.timeLeft - dt);
     }
+    renderHud();
   }
 }
 
