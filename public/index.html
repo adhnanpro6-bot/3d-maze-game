@@ -2,152 +2,72 @@
 <html lang="ml">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <meta name="theme-color" content="#070d19" />
-  <title>Midnight Village: The Knowledge Challenge</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>25-Question Knowledge Quiz</title>
   <link rel="stylesheet" href="/style.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
-  <!-- 3D Spooky Midnight Village Background Canvas -->
-  <div id="game-canvas" aria-hidden="true"></div>
+  <!-- ACCESS / START SCREEN -->
+  <section id="access-screen" class="screen-card-wrap">
+    <div class="quiz-card">
+      <div class="pill">25 QUESTIONS • QUIZ MODE</div>
+      <h1>Knowledge Quiz Challenge</h1>
+      <p class="muted">25 ചോദ്യങ്ങൾക്ക് ഉത്തരം നൽകി നിങ്ങളുടെ സ്കോർ പരിശോധിക്കുക.</p>
 
-  <!-- TITLE / ACCESS SCREEN -->
-  <section id="title-screen" class="screen-overlay active">
-    <div class="panel-card title-card">
-      <div class="moon-badge">MIDNIGHT VILLAGE • BEFORE SUNRISE</div>
-      <h1>Midnight Village: The Knowledge Challenge</h1>
-      <p class="premise">
-        അർദ്ധരാത്രിക്ക് ശേഷം ഇരുണ്ട ഗ്രാമത്തിലൂടെ സഞ്ചരിച്ച് പഴയ സ്കൂൾ, പ്രേതക്കിണർ, കാട്, പഴയ മാളിക എന്നിവ കടന്ന് സൂര്യോദയത്തിന് മുൻപ് <strong>Village Club</strong>-ൽ എത്തുക. ഓരോ ഘട്ടത്തിലും പൊതുവിജ്ഞാന ചോദ്യങ്ങളും രസകരമായ മിനി-ചലഞ്ചുകളും നേരിടുക.
-      </p>
+      <label for="player-name">കളിക്കാരന്റെ പേര്</label>
+      <input id="player-name" type="text" placeholder="നിങ്ങളുടെ പേര് നൽകുക" autocomplete="off" />
 
-      <div class="access-box">
-        <div class="field-group">
-          <label for="player-name">കളിക്കാരന്റെ പേര്</label>
-          <input id="player-name" type="text" placeholder="നിങ്ങളുടെ പേര് നൽകുക" autocomplete="off" />
-        </div>
-        <div class="field-group">
-          <label for="access-code">ആക്സസ് കോഡ്</label>
-          <input id="access-code" type="text" placeholder="ഉദാ: KKMQZN02-9153" autocomplete="off" />
-        </div>
-        <p id="login-status" class="status-msg"></p>
-      </div>
+      <label for="access-code">ആക്സസ് കോഡ്</label>
+      <input id="access-code" type="text" placeholder="ഉദാ: KKMQZN02-9153" autocomplete="off" />
 
-      <div class="title-actions">
-        <button id="start-game-btn" type="button" class="btn primary-btn">Start Game</button>
-        <button id="how-to-play-btn" type="button" class="btn secondary-btn">How to Play</button>
-        <button id="sound-toggle-btn" type="button" class="btn ghost-btn" aria-pressed="false">Sound: OFF</button>
-      </div>
+      <button id="start-btn" type="button" class="btn primary">Quiz തുടങ്ങുക</button>
+      <p id="login-status" class="status-text"></p>
 
-      <details class="continue-drawer">
-        <summary>ഇതിനകം ഉപയോഗിച്ച ആക്സസ് കോഡ് വഴി തുടരുക (Continue)</summary>
+      <details class="continue-box">
+        <summary>ഉപയോഗിച്ച ആക്സസ് കോഡ് വഴി തുടരുക</summary>
         <div class="continue-row">
           <input id="continue-code-input" type="text" placeholder="ഉദാ: KKMQZN01-7842" autocomplete="off" />
-          <button id="continue-btn" type="button" class="btn secondary-btn">Continue</button>
+          <button id="continue-btn" type="button" class="btn secondary">Continue</button>
         </div>
-        <p id="continue-status" class="status-msg"></p>
+        <p id="continue-status" class="status-text"></p>
       </details>
     </div>
   </section>
 
-  <!-- HOW TO PLAY MODAL -->
-  <section id="how-to-play-modal" class="screen-overlay" style="display: none;">
-    <div class="panel-card">
-      <h2>How to Play</h2>
-      <ul class="rules-list">
-        <li><strong>ലക്ഷ്യം:</strong> സൂര്യോദയത്തിന് (Sunrise) മുൻപും 3 Lives നഷ്ടപ്പെടാതെയും Village Club-ൽ എത്തുക.</li>
-        <li><strong>ചലഞ്ചുകൾ:</strong> ശാസ്ത്രം, ചരിത്രം, ഭൂമിശാസ്ത്രം, കായികം, പ്രകൃതി, സംസ്കാരം എന്നിവയിലെ ചോദ്യങ്ങളും Memory, Odd-One-Out, Pattern, Observation ചലഞ്ചുകളും നേരിടുക.</li>
-        <li><strong>സമയം &amp; സ്കോർ:</strong> ഓരോ റൗണ്ടിനും 15 സെക്കൻഡ് സമയമുണ്ട്. വേഗതയും തുടർച്ചയായ ശരി ഉത്തരങ്ങളും (Combo) കൂടുതൽ പോയിന്റ് നൽകും.</li>
-        <li><strong>Lives &amp; Hints:</strong> നിങ്ങൾക്ക് <strong>3 Lives</strong> ഉം <strong>2 Hints</strong> ഉം ഉണ്ട്. ഓരോ Hint-ഉം രണ്ട് തെറ്റായ ഓപ്ഷനുകൾ ഒഴിവാക്കും.</li>
-        <li><strong>കൺട്രോളുകൾ:</strong> സ്ക്രീനിൽ ടാപ്പ് ചെയ്യാം അല്ലെങ്കിൽ കീബോർഡിൽ <code>1-4</code> / <code>A-D</code> ഉത്തരത്തിനും, <code>H</code> ഹിന്റിനും, <code>P</code> പോസിനും ഉപയോഗിക്കാം.</li>
-      </ul>
-      <button id="close-help-btn" type="button" class="btn primary-btn">തിരികെ പോകുക</button>
+  <!-- QUIZ SCREEN -->
+  <main id="quiz-screen" class="screen-card-wrap" style="display: none;">
+    <div class="quiz-card quiz-wide">
+      <div class="quiz-topbar">
+        <span id="hud-player">Player: -</span>
+        <span id="hud-qnum">Question: 1 / 25</span>
+        <span id="hud-score">Score: 0</span>
+        <span id="hud-timer">Time: 20.0s</span>
+      </div>
+
+      <div class="q-meta">
+        <span id="q-category" class="pill">GENERAL</span>
+        <button id="hint-btn" type="button" class="btn hint">Hint (3 left)</button>
+      </div>
+
+      <h2 id="q-prompt" class="q-prompt"></h2>
+      <div id="choices-list" class="choices-list"></div>
+
+      <div id="feedback-panel" class="feedback-panel" style="display: none;">
+        <div id="feedback-heading" class="feedback-heading"></div>
+        <p id="feedback-text" class="feedback-text"></p>
+        <button id="next-btn" type="button" class="btn primary">അടുത്ത ചോദ്യം</button>
+      </div>
     </div>
-  </section>
-
-  <!-- GAMEPLAY SCREEN -->
-  <main id="gameplay-screen" style="display: none;">
-    <header class="top-hud">
-      <div class="hud-chip" id="hud-location">Location: Whispering Lane</div>
-      <div class="hud-chip" id="hud-progress">Step: 1 / 10</div>
-      <div class="hud-chip" id="hud-lives">Lives: ❤️❤️❤️</div>
-      <div class="hud-chip" id="hud-hints">Hints: 💡 2</div>
-      <div class="hud-chip" id="hud-score">Score: 0</div>
-      <div class="hud-chip hud-round-timer" id="hud-round-timer">Round: 15.0s</div>
-      <div class="hud-chip hud-sunrise-timer" id="hud-sunrise-timer">Sunrise: 04:00</div>
-      <div class="hud-controls">
-        <button id="hud-sound-btn" type="button" class="mini-btn" aria-pressed="false">🔇 OFF</button>
-        <button id="pause-btn" type="button" class="mini-btn">Pause</button>
-      </div>
-    </header>
-
-    <section class="challenge-stage">
-      <div class="challenge-card">
-        <div class="challenge-meta">
-          <span id="challenge-type-badge" class="badge">KNOWLEDGE</span>
-          <span id="challenge-difficulty-badge" class="badge diff-easy">EASY</span>
-          <span id="challenge-fear-text" class="fear-indicator">Village Fear: 10%</span>
-        </div>
-
-        <p id="story-cue" class="story-cue"></p>
-        <h2 id="challenge-prompt" class="challenge-prompt"></h2>
-
-        <div id="challenge-interactive-area" class="interactive-area"></div>
-        <div id="choices-grid" class="choices-grid"></div>
-
-        <div class="action-bar">
-          <button id="use-hint-btn" type="button" class="btn hint-btn">Use Hint (2 left)</button>
-        </div>
-
-        <div id="feedback-box" class="feedback-box" style="display: none;">
-          <div id="feedback-title" class="feedback-title"></div>
-          <p id="feedback-explanation" class="feedback-explanation"></p>
-          <button id="next-round-btn" type="button" class="btn primary-btn">അടുത്ത ഘട്ടത്തിലേക്ക്</button>
-        </div>
-      </div>
-    </section>
   </main>
 
-  <!-- PAUSE SCREEN -->
-  <section id="pause-screen" class="screen-overlay" style="display: none;">
-    <div class="panel-card">
-      <h2>Game Paused</h2>
-      <p class="premise">ടൈമർ നിർത്തിവെച്ചിരിക്കുന്നു. കളി തുടരുകയോ ആദ്യം മുതൽ ആരംഭിക്കുകയോ ചെയ്യാം.</p>
-      <div class="modal-btn-row">
-        <button id="resume-btn" type="button" class="btn primary-btn">Resume</button>
-        <button id="restart-btn" type="button" class="btn secondary-btn">Restart</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- WIN SCREEN -->
-  <section id="win-screen" class="screen-overlay" style="display: none;">
-    <div class="panel-card">
-      <div class="moon-badge success-badge">SUNRISE ESCAPE • CLUB REACHED</div>
-      <h2>Victory! Village Club എത്തിച്ചേർന്നു</h2>
-      <p class="premise">സൂര്യോദയത്തിന് മുൻപ് ഗ്രാമത്തിലെ വെല്ലുവിളികൾ മറികടന്ന് നിങ്ങൾ Village Club-ൽ സുരക്ഷിതമായി എത്തി.</p>
-      <div class="summary-stats">
-        <div class="stat-box"><span>Final Score</span><strong id="win-score">0</strong></div>
-        <div class="stat-box"><span>Correct Answers</span><strong id="win-correct">0 / 0</strong></div>
-        <div class="stat-box"><span>Fastest Answer</span><strong id="win-fastest">-</strong></div>
-      </div>
-      <p id="win-sync-status" class="status-msg"></p>
-      <button id="win-play-again-btn" type="button" class="btn primary-btn">Play Again</button>
-    </div>
-  </section>
-
-  <!-- GAME OVER SCREEN -->
-  <section id="gameover-screen" class="screen-overlay" style="display: none;">
-    <div class="panel-card">
-      <div class="moon-badge danger-badge">NIGHT ENDED</div>
-      <h2>Game Over</h2>
-      <p id="gameover-reason" class="premise"></p>
-      <div class="summary-stats">
-        <div class="stat-box"><span>Final Score</span><strong id="gameover-score">0</strong></div>
-        <div class="stat-box"><span>Correct Answers</span><strong id="gameover-correct">0 / 0</strong></div>
-      </div>
-      <p id="gameover-sync-status" class="status-msg"></p>
-      <button id="gameover-play-again-btn" type="button" class="btn primary-btn">Play Again</button>
+  <!-- RESULT SCREEN -->
+  <section id="result-screen" class="screen-card-wrap" style="display: none;">
+    <div class="quiz-card">
+      <div class="pill">QUIZ COMPLETED</div>
+      <h2>നിങ്ങളുടെ ഫലം</h2>
+      <p id="result-summary" class="result-summary"></p>
+      <p id="result-sync-status" class="status-text"></p>
+      <button id="restart-btn" type="button" class="btn primary">വീണ്ടും ശ്രമിക്കുക</button>
     </div>
   </section>
 
