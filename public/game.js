@@ -90,7 +90,6 @@ let lastFrameMs = performance.now();
 let autoSaveTimer = null;
 
 /**
- * Deterministic shuffle per user (based on accessCode/sessionId) so order never changes while playing or resuming
  * @param {TypedQuizQuestion[]} list
  * @param {string} seedStr
  * @returns {TypedQuizQuestion[]}
@@ -148,10 +147,10 @@ function calculateCurrentScore() {
   let score = 0;
   for (const q of state.deck) {
     const typed = normalizeText(state.userAnswers[q.id] || "");
-    if (!typed) continue; // Unattended = 0 point
+    if (!typed) continue;
     const accepted = q.answers.map((a) => normalizeText(a));
     if (accepted.includes(typed)) {
-      score += 1; // Correct = 1 point, Wrong = 0 point
+      score += 1;
     }
   }
   return score;
@@ -378,7 +377,6 @@ async function refreshLeaderboard() {
       rank.className = "lb-rank";
       rank.textContent = `#${idx + 1}`;
 
-      // Only show playerName (never access code)
       const name = document.createElement("span");
       name.className = "lb-name";
       name.textContent = String(entry.playerName || "Player");
@@ -424,10 +422,13 @@ if (UI.startBtn) {
 
       if (!data || !data.valid) {
         if (UI.loginStatus) {
-          UI.loginStatus.textContent =
-            data?.reason === "ALREADY_USED"
-              ? "ഈ കോഡ് ഉപയോഗിച്ചു കഴിഞ്ഞു — താഴെയുള്ള Continue വഴി തുടരാം."
-              : "തെറ്റായ ആക്സസ് കോഡ്.";
+          if (data?.reason === "ALREADY_USED") {
+            UI.loginStatus.textContent = "ഈ കോഡ് ഉപയോഗിച്ചു കഴിഞ്ഞു — താഴെയുള്ള Continue വഴി തുടരാം.";
+          } else if (data?.reason === "MISSING_APPS_SCRIPT_URL") {
+            UI.loginStatus.textContent = "Render Environment-ൽ APPS_SCRIPT_URL സെറ്റ് ചെയ്തിട്ടില്ല.";
+          } else {
+            UI.loginStatus.textContent = "തെറ്റായ ആക്സസ് കോഡ്.";
+          }
         }
         return;
       }
@@ -515,7 +516,6 @@ if (UI.refreshLbBtn) {
   });
 }
 
-// Save progress if browser back/unload occurs
 window.addEventListener("beforeunload", () => {
   if (state.active) {
     saveLocalDraft();
@@ -523,7 +523,6 @@ window.addEventListener("beforeunload", () => {
   }
 });
 
-// Auto-resume if hash session exists
 async function checkHashResumeOnLoad() {
   const m = (window.location.hash || "").match(/session=([^&]+)/);
   if (!m || !m[1]) return;
