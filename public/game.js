@@ -40,6 +40,8 @@ const QUIZ_QUESTIONS = [
   { category: "GK", prompt: "ഇന്ത്യൻ ഭരണഘടന നിലവിൽ വന്ന വർഷം ഏതാണ്?", answers: ["1950"], explanation: "1950 ജനുവരി 26-നാണ് ഇന്ത്യൻ ഭരണഘടന നിലവിൽ വന്നത്." }
 ];
 
+const TOTAL_QUESTIONS = QUIZ_QUESTIONS.length; // Always all 25 questions
+
 /**
  * @param {string} id
  * @returns {HTMLElement | null}
@@ -160,7 +162,7 @@ function showView(name) {
 }
 
 function renderHud() {
-  const total = state.deck.length || QUIZ_QUESTIONS.length;
+  const total = state.deck.length || TOTAL_QUESTIONS;
   if (UI.hudPlayer) UI.hudPlayer.textContent = `Player: ${state.playerName}`;
   if (UI.hudQnum) UI.hudQnum.textContent = `Question: ${Math.min(state.index + 1, total)} / ${total}`;
   if (UI.hudScore) UI.hudScore.textContent = `Score: ${state.score} | Total Time: ${state.totalElapsed.toFixed(1)}s`;
@@ -182,7 +184,12 @@ async function syncProgress(finished) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         sessionId: state.sessionId,
+        playerName: state.playerName,
+        code: state.accessCode,
         doorIndex: state.index,
+        score: state.score,
+        correctCount: state.correctCount,
+        totalQuestions: state.deck.length || TOTAL_QUESTIONS,
         elapsedSeconds: Number(state.totalElapsed.toFixed(1)),
         finished
       })
@@ -193,21 +200,24 @@ async function syncProgress(finished) {
 async function finishQuiz() {
   state.active = false;
   showView("RESULT");
-  const total = state.deck.length;
+  const total = state.deck.length || TOTAL_QUESTIONS;
   if (UI.resultSummary) {
     UI.resultSummary.textContent =
-      `${state.playerName}, നിങ്ങൾ ${total} ചോദ്യങ്ങളും പൂർത്തിയാക്കി! ശരി ഉത്തരങ്ങൾ: ${state.correctCount} | സ്കോർ: ${state.score} | ക്വിസ് പൂർത്തിയാക്കാൻ എടുത്ത സമയം: ${state.totalElapsed.toFixed(1)}s`;
+      `${state.playerName}, നിങ്ങൾ എല്ലാ ${total} ചോദ്യങ്ങളും പൂർത്തിയാക്കി! സ്കോർ: ${state.score} | ശരി ഉത്തരങ്ങൾ: ${state.correctCount}/${total} | മൊത്തം സമയം: ${state.totalElapsed.toFixed(1)}s`;
   }
-  if (UI.resultSyncStatus) UI.resultSyncStatus.textContent = "ഫലം സേവ് ചെയ്യുന്നു...";
+  if (UI.resultSyncStatus) UI.resultSyncStatus.textContent = "സ്കോർ Google Sheet-ലേക്ക് അയക്കുന്നു...";
   await syncProgress(true);
-  if (UI.resultSyncStatus) UI.resultSyncStatus.textContent = "ഫലം രേഖപ്പെടുത്തി.";
+  if (UI.resultSyncStatus) UI.resultSyncStatus.textContent = "സ്കോർ Google Sheet-ൽ രേഖപ്പെടുത്തി.";
 }
 
+/**
+ * @param {string} val
+ */
 function normalizeText(val) {
   return String(val || "").trim().toUpperCase().replace(/\s+/g, " ");
 }
 
-function evaluateTypedAnswer() {
+async function evaluateTypedAnswer() {
   if (!state.active || state.answeredCorrectly) return;
 
   const q = state.deck[state.index];
@@ -220,7 +230,6 @@ function evaluateTypedAnswer() {
   state.attemptsOnCurrent += 1;
 
   if (isCorrect) {
-    // Only move to next question once current question is answered correctly
     state.answeredCorrectly = true;
     state.correctCount += 1;
     if (answerInputEl) answerInputEl.disabled = true;
@@ -231,7 +240,7 @@ function evaluateTypedAnswer() {
     state.score += gained;
 
     if (UI.feedbackHeading) {
-      UI.feedbackHeading.textContent = `ശരി ഉത്തരം! +${gained} pts (ഇനി അടുത്ത ചോദ്യത്തിലേക്ക് പോകാം)`;
+      UI.feedbackHeading.textContent = `ശരി ഉത്തരം! +${gained} pts (സ്കോർ: ${state.score})`;
       UI.feedbackHeading.style.color = "#4ade80";
     }
     if (UI.feedbackText) UI.feedbackText.textContent = q.explanation;
@@ -241,15 +250,15 @@ function evaluateTypedAnswer() {
     }
     if (UI.feedbackPanel) UI.feedbackPanel.style.display = "block";
     renderHud();
+    await syncProgress(false);
   } else {
-    // Unlimited life / tries: stay on same question until answered correctly
     if (answerInputEl) {
       answerInputEl.value = "";
       answerInputEl.focus();
     }
     if (UI.feedbackPanel) UI.feedbackPanel.style.display = "block";
     if (UI.feedbackHeading) {
-      UI.feedbackHeading.textContent = "തെറ്റായ ഉത്തരം — ലൈഫ് നഷ്ടമാകില്ല, ഈ ചോദ്യത്തിന് ശരി ഉത്തരം നൽകിയാലേ അടുത്തതിലേക്ക് പോകൂ!";
+      UI.feedbackHeading.textContent = "തെറ്റായ ഉത്തരം — ഈ ചോദ്യത്തിന് ശരി ഉത്തരം നൽകിയാലേ അടുത്ത ചോദ്യത്തിലേക്ക് പോകൂ!";
       UI.feedbackHeading.style.color = "#f87171";
     }
     if (UI.feedbackText) UI.feedbackText.textContent = "വീണ്ടും ടൈപ്പ് ചെയ്ത് Submit ചെയ്യുക.";
@@ -259,7 +268,7 @@ function evaluateTypedAnswer() {
 }
 
 function handleTypedSubmit() {
-  evaluateTypedAnswer();
+  void evaluateTypedAnswer();
 }
 
 function handleHint() {
@@ -284,12 +293,12 @@ function handleHint() {
 }
 
 function loadQuestion() {
-  const q = state.deck[state.index];
-  if (!q) {
+  if (state.index >= state.deck.length) {
     void finishQuiz();
     return;
   }
 
+  const q = state.deck[state.index];
   state.answeredCorrectly = false;
   state.attemptsOnCurrent = 0;
   state.timeLeft = SECONDS_PER_QUESTION;
@@ -314,12 +323,13 @@ function loadQuestion() {
  * @param {{ sessionId: string, playerName: string, accessCode: string }} params
  */
 function beginQuizSession(params) {
+  const fullShuffled25 = shuffle(QUIZ_QUESTIONS);
   state = {
     active: true,
     sessionId: params.sessionId,
     playerName: params.playerName,
     accessCode: params.accessCode,
-    deck: shuffle(QUIZ_QUESTIONS).slice(0, 25),
+    deck: fullShuffled25,
     index: 0,
     score: 0,
     correctCount: 0,
@@ -435,7 +445,6 @@ function tick(now) {
   lastFrameMs = now;
 
   if (state.active) {
-    // Total quiz completion timer runs continuously until all 25 questions are finished
     state.totalElapsed += dt;
     if (!state.answeredCorrectly) {
       state.timeLeft = Math.max(0, state.timeLeft - dt);
