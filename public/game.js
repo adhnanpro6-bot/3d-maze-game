@@ -1,5 +1,4 @@
-/** @typedef {{ category: string, prompt: string, options: string[], answerIndex: number, explanation: string }} QuizQuestion */
-/** @typedef {{ text: string, isCorrect: boolean }} QuizChoice */
+/** @typedef {{ category: string, prompt: string, answers: string[], explanation: string }} TypedQuizQuestion */
 
 const SECONDS_PER_QUESTION = 20;
 const POINTS_PER_CORRECT = 100;
@@ -12,183 +11,33 @@ const ENDPOINTS = {
   progress: "/api/save-progress"
 };
 
-/** @type {QuizQuestion[]} */
+/** @type {TypedQuizQuestion[]} */
 const QUIZ_QUESTIONS = [
-  {
-    category: "Science",
-    prompt: "ചെടികൾ സൂര്യപ്രകാശത്തിന്റെ സഹായത്തോടെ ഭക്ഷണം ഉണ്ടാക്കുന്ന പ്രക്രിയ ഏതാണ്?",
-    options: ["Photosynthesis", "Evaporation", "Filtration", "Condensation"],
-    answerIndex: 0,
-    explanation: "സൂര്യപ്രകാശം ഉപയോഗിച്ച് ചെടികൾ ഭക്ഷണം നിർമ്മിക്കുന്നതിനെ Photosynthesis എന്ന് വിളിക്കുന്നു."
-  },
-  {
-    category: "Geography",
-    prompt: "ഭൂമിയിലെ ഏറ്റവും വലിയ സമുദ്രം ഏതാണ്?",
-    options: ["Indian Ocean", "Pacific Ocean", "Atlantic Ocean", "Arctic Ocean"],
-    answerIndex: 1,
-    explanation: "Pacific Ocean ആണ് ഏറ്റവും വലിയ സമുദ്രം."
-  },
-  {
-    category: "GK",
-    prompt: "കേരളത്തിൽ ആകെ എത്ര ജില്ലകളുണ്ട്?",
-    options: ["12", "14", "15", "16"],
-    answerIndex: 1,
-    explanation: "കേരളത്തിൽ ആകെ 14 ജില്ലകളാണുള്ളത്."
-  },
-  {
-    category: "Sports",
-    prompt: "ഒരു സാധാരണ ഫുട്ബോൾ ടീമിൽ എത്ര കളിക്കാർ കളിക്കുന്നു?",
-    options: ["9", "10", "11", "12"],
-    answerIndex: 2,
-    explanation: "ഒരു ടീമിൽ 11 കളിക്കാരാണ് ഉണ്ടാകുക."
-  },
-  {
-    category: "Science",
-    prompt: "ജലത്തിന്റെ രാസസൂത്രം (Chemical formula) ഏതാണ്?",
-    options: ["CO2", "H2O", "O2", "NaCl"],
-    answerIndex: 1,
-    explanation: "രണ്ട് ഹൈഡ്രജൻ ആറ്റവും ഒരു ഓക്സിജൻ ആറ്റവും ചേർന്നതാണ് H2O."
-  },
-  {
-    category: "Geography",
-    prompt: "ഇന്ത്യയുടെ തലസ്ഥാന നഗരം ഏതാണ്?",
-    options: ["Mumbai", "Chennai", "New Delhi", "Kolkata"],
-    answerIndex: 2,
-    explanation: "New Delhi ആണ് ഇന്ത്യയുടെ തലസ്ഥാനം."
-  },
-  {
-    category: "Math",
-    prompt: "15 × 4 എത്രയാണ്?",
-    options: ["45", "50", "60", "75"],
-    answerIndex: 2,
-    explanation: "15-നെ 4 കൊണ്ട് ഗുണിച്ചാൽ 60 ലഭിക്കും."
-  },
-  {
-    category: "History",
-    prompt: "ഇന്ത്യയ്ക്ക് സ്വാതന്ത്ര്യം ലഭിച്ചത് ഏത് വർഷമാണ്?",
-    options: ["1942", "1945", "1947", "1950"],
-    answerIndex: 2,
-    explanation: "1947 ഓഗസ്റ്റ് 15-നാണ് ഇന്ത്യയ്ക്ക് സ്വാതന്ത്ര്യം ലഭിച്ചത്."
-  },
-  {
-    category: "Nature",
-    prompt: "ഏറ്റവും വേഗത്തിൽ ഓടുന്ന കരയിലെ ജീവി ഏതാണ്?",
-    options: ["Lion", "Cheetah", "Horse", "Greyhound"],
-    answerIndex: 1,
-    explanation: "Cheetah ആണ് കരയിലെ ഏറ്റവും വേഗതയുള്ള ജീവി."
-  },
-  {
-    category: "Culture",
-    prompt: "കേരളത്തിലെ പ്രശസ്തമായ വിളവെടുപ്പ് ഉത്സവം ഏതാണ്?",
-    options: ["Vishu", "Onam", "Thrissur Pooram", "Bihu"],
-    answerIndex: 1,
-    explanation: "കേരളത്തിന്റെ ദേശീയ ഉത്സവവും വിളവെടുപ്പ് ഉത്സവവുമാണ് ഓണം."
-  },
-  {
-    category: "Science",
-    prompt: "ശബ്ദം ശൂന്യതയിലൂടെ സഞ്ചരിക്കുമോ?",
-    options: ["അതെ", "ഇല്ല", "ചിലപ്പോൾ", "രാത്രിയിൽ മാത്രം"],
-    answerIndex: 1,
-    explanation: "ശബ്ദത്തിന് സഞ്ചരിക്കാൻ വായു പോലുള്ള മാധ്യമം ആവശ്യമാണ്."
-  },
-  {
-    category: "Geography",
-    prompt: "ലോകത്തിലെ ഏറ്റവും ഉയരം കൂടിയ പർവതശിഖരം ഏതാണ്?",
-    options: ["K2", "Mount Everest", "Kangchenjunga", "Makalu"],
-    answerIndex: 1,
-    explanation: "Mount Everest ആണ് ലോകത്തിലെ ഏറ്റവും ഉയരം കൂടിയ കൊടുമുടി."
-  },
-  {
-    category: "Math",
-    prompt: "144-ന്റെ വർഗ്ഗമൂലം (Square root) എത്രയാണ്?",
-    options: ["10", "11", "12", "14"],
-    answerIndex: 2,
-    explanation: "12 × 12 = 144 ആയതിനാൽ വർഗ്ഗമൂലം 12 ആണ്."
-  },
-  {
-    category: "Sports",
-    prompt: "ഒളിമ്പിക് പതാകയിൽ എത്ര വളയങ്ങളുണ്ട്?",
-    options: ["4", "5", "6", "7"],
-    answerIndex: 1,
-    explanation: "ഒളിമ്പിക് പതാകയിൽ പരസ്പരം ബന്ധിപ്പിച്ച 5 വളയങ്ങളാണുള്ളത്."
-  },
-  {
-    category: "Science",
-    prompt: "സൗരയൂഥത്തിലെ ഏറ്റവും വലിയ ഗ്രഹം ഏതാണ്?",
-    options: ["Mars", "Saturn", "Jupiter", "Neptune"],
-    answerIndex: 2,
-    explanation: "Jupiter ആണ് സൗരയൂഥത്തിലെ ഏറ്റവും വലിയ ഗ്രഹം."
-  },
-  {
-    category: "Geography",
-    prompt: "ലോകത്തിലെ ഏറ്റവും നീളം കൂടിയ നദിയായി പൊതുവെ കണക്കാക്കപ്പെടുന്നത് ഏതാണ്?",
-    options: ["Amazon", "Nile", "Ganga", "Yangtze"],
-    answerIndex: 1,
-    explanation: "Nile നദിയാണ് ലോകത്തിലെ ഏറ്റവും നീളം കൂടിയ നദിയായി പൊതുവെ പറയപ്പെടുന്നത്."
-  },
-  {
-    category: "Culture",
-    prompt: "കഥകളി ഏത് സംസ്ഥാനത്തിന്റെ പരമ്പരാഗത കലാരൂപമാണ്?",
-    options: ["Tamil Nadu", "Karnataka", "Kerala", "Odisha"],
-    answerIndex: 2,
-    explanation: "കേരളത്തിന്റെ പരമ്പരാഗത ശാസ്ത്രീയ കലാരൂപമാണ് കഥകളി."
-  },
-  {
-    category: "Math",
-    prompt: "25% of 200 എത്രയാണ്?",
-    options: ["25", "40", "50", "75"],
-    answerIndex: 2,
-    explanation: "200-ന്റെ 25% (നാലിലൊന്ന്) 50 ആണ്."
-  },
-  {
-    category: "Science",
-    prompt: "മനുഷ്യശരീരത്തിലെ ഏറ്റവും വലിയ അവയവം ഏതാണ്?",
-    options: ["Heart", "Liver", "Skin", "Brain"],
-    answerIndex: 2,
-    explanation: "Skin (ത്വക്ക്) ആണ് മനുഷ്യശരീരത്തിലെ ഏറ്റവും വലിയ അവയവം."
-  },
-  {
-    category: "History",
-    prompt: "ചന്ദ്രനിൽ ആദ്യം കാലുകുത്തിയ മനുഷ്യൻ ആര്?",
-    options: ["Yuri Gagarin", "Neil Armstrong", "Buzz Aldrin", "Rakesh Sharma"],
-    answerIndex: 1,
-    explanation: "1969-ൽ അപ്പോളോ 11 ദൗത്യത്തിലാണ് Neil Armstrong ചന്ദ്രനിൽ ഇറങ്ങിയത്."
-  },
-  {
-    category: "Nature",
-    prompt: "മരങ്ങൾ ഓക്സിജൻ പുറത്തുവിടാൻ സഹായിക്കുന്ന പ്രധാന വാതകം ഏതാണ്?",
-    options: ["Carbon Dioxide", "Nitrogen", "Hydrogen", "Helium"],
-    answerIndex: 0,
-    explanation: "Carbon Dioxide ആഗിരണം ചെയ്താണ് ചെടികൾ ഓക്സിജൻ പുറത്തുവിടുന്നത്."
-  },
-  {
-    category: "Sports",
-    prompt: "ക്രിക്കറ്റിൽ ഒരു ഓവറിൽ സാധാരണയായി എത്ര നിയമപരമായ പന്തുകളുണ്ട്?",
-    options: ["5", "6", "8", "10"],
-    answerIndex: 1,
-    explanation: "ഒരു ഓവറിൽ 6 നിയമപരമായ പന്തുകളാണുള്ളത്."
-  },
-  {
-    category: "GK",
-    prompt: "കമ്പ്യൂട്ടറിന്റെ 'Brain' എന്ന് സാധാരണയായി വിളിക്കുന്നത് ഏതിനെയാണ്?",
-    options: ["RAM", "CPU", "Monitor", "Keyboard"],
-    answerIndex: 1,
-    explanation: "Central Processing Unit (CPU) ആണ് കമ്പ്യൂട്ടറിന്റെ പ്രധാന പ്രോസസ്സിംഗ് യൂണിറ്റ്."
-  },
-  {
-    category: "Math",
-    prompt: "9² (9 square) എത്രയാണ്?",
-    options: ["18", "72", "81", "90"],
-    answerIndex: 2,
-    explanation: "9 × 9 = 81 ആണ്."
-  },
-  {
-    category: "GK",
-    prompt: "ഇന്ത്യൻ ഭരണഘടന നിലവിൽ വന്ന വർഷം ഏതാണ്?",
-    options: ["1947", "1949", "1950", "1952"],
-    answerIndex: 2,
-    explanation: "1950 ജനുവരി 26-നാണ് ഇന്ത്യൻ ഭരണഘടന നിലവിൽ വന്നത്."
-  }
+  { category: "Science", prompt: "ചെടികൾ സൂര്യപ്രകാശത്തിന്റെ സഹായത്തോടെ ഭക്ഷണം ഉണ്ടാക്കുന്ന പ്രക്രിയ ഏതാണ്?", answers: ["PHOTOSYNTHESIS", "പ്രകാശസംശ്ലേഷണം"], explanation: "സൂര്യപ്രകാശം ഉപയോഗിച്ച് ചെടികൾ ഭക്ഷണം നിർമ്മിക്കുന്നതിനെ Photosynthesis എന്ന് വിളിക്കുന്നു." },
+  { category: "Geography", prompt: "ഭൂമിയിലെ ഏറ്റവും വലിയ സമുദ്രം ഏതാണ്?", answers: ["PACIFIC OCEAN", "PACIFIC", "പസഫിക് സമുദ്രം"], explanation: "Pacific Ocean ആണ് ഏറ്റവും വലിയ സമുദ്രം." },
+  { category: "GK", prompt: "കേരളത്തിൽ ആകെ എത്ര ജില്ലകളുണ്ട്?", answers: ["14", "പതിനാല്"], explanation: "കേരളത്തിൽ ആകെ 14 ജില്ലകളാണുള്ളത്." },
+  { category: "Sports", prompt: "ഒരു സാധാരണ ഫുട്ബോൾ ടീമിൽ എത്ര കളിക്കാർ കളിക്കുന്നു?", answers: ["11", "പതിനൊന്ന്"], explanation: "ഒരു ടീമിൽ 11 കളിക്കാരാണ് ഉണ്ടാകുക." },
+  { category: "Science", prompt: "ജലത്തിന്റെ രാസസൂത്രം (Chemical formula) ഏതാണ്?", answers: ["H2O", "H₂O"], explanation: "രണ്ട് ഹൈഡ്രജൻ ആറ്റവും ഒരു ഓക്സിജൻ ആറ്റവും ചേർന്നതാണ് H2O." },
+  { category: "Geography", prompt: "ഇന്ത്യയുടെ തലസ്ഥാന നഗരം ഏതാണ്?", answers: ["NEW DELHI", "DELHI", "ന്യൂഡൽഹി", "ന്യൂഡെൽഹി"], explanation: "New Delhi ആണ് ഇന്ത്യയുടെ തലസ്ഥാനം." },
+  { category: "Math", prompt: "15 × 4 എത്രയാണ്?", answers: ["60", "അറുപത്"], explanation: "15-നെ 4 കൊണ്ട് ഗുണിച്ചാൽ 60 ലഭിക്കും." },
+  { category: "History", prompt: "ഇന്ത്യയ്ക്ക് സ്വാതന്ത്ര്യം ലഭിച്ചത് ഏത് വർഷമാണ്?", answers: ["1947"], explanation: "1947 ഓഗസ്റ്റ് 15-നാണ് ഇന്ത്യയ്ക്ക് സ്വാതന്ത്ര്യം ലഭിച്ചത്." },
+  { category: "Nature", prompt: "ഏറ്റവും വേഗത്തിൽ ഓടുന്ന കരയിലെ ജീവി ഏതാണ്?", answers: ["CHEETAH", "ചീറ്റ", "ചീറ്റപ്പുലി"], explanation: "Cheetah ആണ് കരയിലെ ഏറ്റവും വേഗതയുള്ള ജീവി." },
+  { category: "Culture", prompt: "കേരളത്തിലെ പ്രശസ്തമായ വിളവെടുപ്പ് ഉത്സവം ഏതാണ്?", answers: ["ONAM", "ഓണം"], explanation: "കേരളത്തിന്റെ ദേശീയ ഉത്സവവും വിളവെടുപ്പ് ഉത്സവവുമാണ് ഓണം." },
+  { category: "Science", prompt: "ശബ്ദം ശൂന്യതയിലൂടെ സഞ്ചരിക്കുമോ? (അതെ / ഇല്ല)", answers: ["ഇല്ല", "NO", "ILLA"], explanation: "ശബ്ദത്തിന് സഞ്ചരിക്കാൻ വായു പോലുള്ള മാധ്യമം ആവശ്യമാണ്." },
+  { category: "Geography", prompt: "ലോകത്തിലെ ഏറ്റവും ഉയരം കൂടിയ പർവതശിഖരം ഏതാണ്?", answers: ["MOUNT EVEREST", "EVEREST", "എവറസ്റ്റ്"], explanation: "Mount Everest ആണ് ലോകത്തിലെ ഏറ്റവും ഉയരം കൂടിയ കൊടുമുടി." },
+  { category: "Math", prompt: "144-ന്റെ വർഗ്ഗമൂലം (Square root) എത്രയാണ്?", answers: ["12", "പന്ത്രണ്ട്"], explanation: "12 × 12 = 144 ആയതിനാൽ വർഗ്ഗമൂലം 12 ആണ്." },
+  { category: "Sports", prompt: "ഒളിമ്പിക് പതാകയിൽ എത്ര വളയങ്ങളുണ്ട്?", answers: ["5", "അഞ്ച്"], explanation: "ഒളിമ്പിക് പതാകയിൽ പരസ്പരം ബന്ധിപ്പിച്ച 5 വളയങ്ങളാണുള്ളത്." },
+  { category: "Science", prompt: "സൗരയൂഥത്തിലെ ഏറ്റവും വലിയ ഗ്രഹം ഏതാണ്?", answers: ["JUPITER", "വ്യാഴം"], explanation: "Jupiter ആണ് സൗരയൂഥത്തിലെ ഏറ്റവും വലിയ ഗ്രഹം." },
+  { category: "Geography", prompt: "ലോകത്തിലെ ഏറ്റവും നീളം കൂടിയ നദിയായി പൊതുവെ കണക്കാക്കപ്പെടുന്നത് ഏതാണ്?", answers: ["NILE", "നൈൽ"], explanation: "Nile നദിയാണ് ലോകത്തിലെ ഏറ്റവും നീളം കൂടിയ നദിയായി പൊതുവെ പറയപ്പെടുന്നത്." },
+  { category: "Culture", prompt: "കഥകളി ഏത് സംസ്ഥാനത്തിന്റെ പരമ്പരാഗത കലാരൂപമാണ്?", answers: ["KERALA", "കേരളം"], explanation: "കേരളത്തിന്റെ പരമ്പരാഗത ശാസ്ത്രീയ കലാരൂപമാണ് കഥകളി." },
+  { category: "Math", prompt: "25% of 200 എത്രയാണ്?", answers: ["50", "അൻപത്"], explanation: "200-ന്റെ 25% (നാലിലൊന്ന്) 50 ആണ്." },
+  { category: "Science", prompt: "മനുഷ്യശരീരത്തിലെ ഏറ്റവും വലിയ അവയവം ഏതാണ്?", answers: ["SKIN", "ത്വക്ക്", "ചർമ്മം"], explanation: "Skin (ത്വക്ക്) ആണ് മനുഷ്യശരീരത്തിലെ ഏറ്റവും വലിയ അവയവം." },
+  { category: "History", prompt: "ചന്ദ്രനിൽ ആദ്യം കാലുകുത്തിയ മനുഷ്യൻ ആര്?", answers: ["NEIL ARMSTRONG", "ARMSTRONG", "നീൽ ആംസ്ട്രോംഗ്"], explanation: "1969-ൽ അപ്പോളോ 11 ദൗത്യത്തിലാണ് Neil Armstrong ചന്ദ്രനിൽ ഇറങ്ങിയത്." },
+  { category: "Nature", prompt: "മരങ്ങൾ ഓക്സിജൻ പുറത്തുവിടാൻ ആഗിരണം ചെയ്യുന്ന പ്രധാന വാതകം ഏതാണ്?", answers: ["CARBON DIOXIDE", "CO2", "കാർബൺ ഡയോക്സൈഡ്"], explanation: "Carbon Dioxide ആഗിരണം ചെയ്താണ് ചെടികൾ ഓക്സിജൻ പുറത്തുവിടുന്നത്." },
+  { category: "Sports", prompt: "ക്രിക്കറ്റിൽ ഒരു ഓവറിൽ സാധാരണയായി എത്ര നിയമപരമായ പന്തുകളുണ്ട്?", answers: ["6", "ആറ്"], explanation: "ഒരു ഓവറിൽ 6 നിയമപരമായ പന്തുകളാണുള്ളത്." },
+  { category: "GK", prompt: "കമ്പ്യൂട്ടറിന്റെ 'Brain' എന്ന് സാധാരണയായി വിളിക്കുന്നത് ഏതിനെയാണ്?", answers: ["CPU"], explanation: "Central Processing Unit (CPU) ആണ് കമ്പ്യൂട്ടറിന്റെ പ്രധാന പ്രോസസ്സിംഗ് യൂണിറ്റ്." },
+  { category: "Math", prompt: "9² (9 square) എത്രയാണ്?", answers: ["81", "എൺപത്തിയൊന്ന്"], explanation: "9 × 9 = 81 ആണ്." },
+  { category: "GK", prompt: "ഇന്ത്യൻ ഭരണഘടന നിലവിൽ വന്ന വർഷം ഏതാണ്?", answers: ["1950"], explanation: "1950 ജനുവരി 26-നാണ് ഇന്ത്യൻ ഭരണഘടന നിലവിൽ വന്നത്." }
 ];
 
 /**
@@ -229,6 +78,43 @@ const UI = {
   restartBtn: /** @type {HTMLButtonElement | null} */ (getEl("restart-btn"))
 };
 
+/** @type {HTMLInputElement | null} */
+let answerInputEl = null;
+/** @type {HTMLButtonElement | null} */
+let submitAnswerBtnEl = null;
+
+function ensureTypingUi() {
+  if (!UI.choicesList) return;
+  UI.choicesList.style.display = "block";
+  if (answerInputEl && submitAnswerBtnEl) return;
+
+  UI.choicesList.innerHTML = `
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <input id="typed-answer-input" type="text" placeholder="ഉത്തരം ഇവിടെ ടൈപ്പ് ചെയ്യുക..." autocomplete="off"
+        style="flex:1;min-width:200px;min-height:48px;padding:10px 14px;border-radius:12px;border:1px solid #38bdf8;background:#090e1a;color:#fff;font-size:16px;outline:none;" />
+      <button id="typed-submit-btn" type="button" class="btn secondary"
+        style="min-height:48px;padding:10px 20px;background:#0284c7;color:#fff;border:none;">Submit</button>
+    </div>
+  `;
+
+  answerInputEl = /** @type {HTMLInputElement | null} */ (getEl("typed-answer-input"));
+  submitAnswerBtnEl = /** @type {HTMLButtonElement | null} */ (getEl("typed-submit-btn"));
+
+  if (submitAnswerBtnEl) {
+    submitAnswerBtnEl.addEventListener("click", () => {
+      handleTypedSubmit();
+    });
+  }
+  if (answerInputEl) {
+    answerInputEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleTypedSubmit();
+      }
+    });
+  }
+}
+
 /**
  * @template T
  * @param {T[]} list
@@ -245,7 +131,7 @@ function shuffle(list) {
   return arr;
 }
 
-/** @type {{ active: boolean, sessionId: string, playerName: string, accessCode: string, deck: QuizQuestion[], index: number, score: number, correctCount: number, hintsLeft: number, timeLeft: number, totalElapsed: number, answered: boolean, currentChoices: QuizChoice[] }} */
+/** @type {{ active: boolean, sessionId: string, playerName: string, accessCode: string, deck: TypedQuizQuestion[], index: number, score: number, correctCount: number, hintsLeft: number, timeLeft: number, totalElapsed: number, answered: boolean }} */
 let state = {
   active: false,
   sessionId: "",
@@ -258,8 +144,7 @@ let state = {
   hintsLeft: STARTING_HINTS,
   timeLeft: SECONDS_PER_QUESTION,
   totalElapsed: 0,
-  answered: false,
-  currentChoices: []
+  answered: false
 };
 
 let lastFrameMs = performance.now();
@@ -301,9 +186,7 @@ async function syncProgress(finished) {
         finished
       })
     });
-  } catch (_) {
-    // Ignore transient network sync failures during play
-  }
+  } catch (_) {}
 }
 
 async function finishQuiz() {
@@ -319,25 +202,26 @@ async function finishQuiz() {
   if (UI.resultSyncStatus) UI.resultSyncStatus.textContent = "ഫലം രേഖപ്പെടുത്തി.";
 }
 
+function normalizeText(val) {
+  return String(val || "").trim().toUpperCase().replace(/\s+/g, " ");
+}
+
 /**
- * @param {number | null} choiceIdx
+ * @param {boolean} isTimeout
  */
-function handleAnswer(choiceIdx) {
+function evaluateTypedAnswer(isTimeout) {
   if (!state.active || state.answered) return;
   state.answered = true;
 
-  const buttons = UI.choicesList
-    ? /** @type {HTMLButtonElement[]} */ (Array.from(UI.choicesList.querySelectorAll("button")))
-    : [];
-  for (const btn of buttons) {
-    btn.disabled = true;
-  }
+  if (answerInputEl) answerInputEl.disabled = true;
+  if (submitAnswerBtnEl) submitAnswerBtnEl.disabled = true;
 
   const q = state.deck[state.index];
   if (!q) return;
 
-  const picked = choiceIdx !== null ? state.currentChoices[choiceIdx] : null;
-  const isCorrect = Boolean(picked && picked.isCorrect);
+  const userTyped = normalizeText(answerInputEl ? answerInputEl.value : "");
+  const accepted = q.answers.map((a) => normalizeText(a));
+  const isCorrect = !isTimeout && userTyped.length > 0 && accepted.includes(userTyped);
 
   if (isCorrect) {
     state.correctCount += 1;
@@ -346,21 +230,15 @@ function handleAnswer(choiceIdx) {
       UI.feedbackHeading.textContent = "ശരി ഉത്തരം!";
       UI.feedbackHeading.style.color = "#4ade80";
     }
-    if (choiceIdx !== null && buttons[choiceIdx]) {
-      buttons[choiceIdx].style.borderColor = "#4ade80";
-    }
-  } else if (choiceIdx === null) {
+  } else if (isTimeout) {
     if (UI.feedbackHeading) {
       UI.feedbackHeading.textContent = "സമയം കഴിഞ്ഞു (Timeout)";
       UI.feedbackHeading.style.color = "#f87171";
     }
   } else {
     if (UI.feedbackHeading) {
-      UI.feedbackHeading.textContent = "തെറ്റായ ഉത്തരം";
+      UI.feedbackHeading.textContent = `തെറ്റായ ഉത്തരം — ശരി ഉത്തരം: ${q.answers[0]}`;
       UI.feedbackHeading.style.color = "#f87171";
-    }
-    if (buttons[choiceIdx]) {
-      buttons[choiceIdx].style.borderColor = "#f87171";
     }
   }
 
@@ -372,6 +250,31 @@ function handleAnswer(choiceIdx) {
   renderHud();
 }
 
+function handleTypedSubmit() {
+  evaluateTypedAnswer(false);
+}
+
+function handleHint() {
+  if (!state.active || state.answered || state.hintsLeft <= 0) return;
+  const q = state.deck[state.index];
+  if (!q) return;
+  const primaryAns = q.answers[0] || "";
+  const firstChar = primaryAns.slice(0, 1);
+  const len = primaryAns.length;
+
+  state.hintsLeft -= 1;
+  if (UI.feedbackPanel) {
+    UI.feedbackPanel.style.display = "block";
+    if (UI.feedbackHeading) {
+      UI.feedbackHeading.textContent = `Hint: തുടക്കം "${firstChar}" (${len} അക്ഷരങ്ങൾ/അക്കങ്ങൾ)`;
+      UI.feedbackHeading.style.color = "#fde047";
+    }
+    if (UI.feedbackText) UI.feedbackText.textContent = "";
+    if (UI.nextBtn) UI.nextBtn.style.display = "none";
+  }
+  renderHud();
+}
+
 function loadQuestion() {
   const q = state.deck[state.index];
   if (!q) {
@@ -379,52 +282,22 @@ function loadQuestion() {
     return;
   }
 
-  const rightAnswer = q.options[q.answerIndex];
-  state.currentChoices = shuffle(q.options).map((text) => ({
-    text,
-    isCorrect: text === rightAnswer
-  }));
   state.answered = false;
   state.timeLeft = SECONDS_PER_QUESTION;
+
+  ensureTypingUi();
+  if (answerInputEl) {
+    answerInputEl.value = "";
+    answerInputEl.disabled = false;
+    setTimeout(() => answerInputEl?.focus(), 30);
+  }
+  if (submitAnswerBtnEl) submitAnswerBtnEl.disabled = false;
 
   if (UI.qCategory) UI.qCategory.textContent = q.category;
   if (UI.qPrompt) UI.qPrompt.textContent = q.prompt;
   if (UI.feedbackPanel) UI.feedbackPanel.style.display = "none";
+  if (UI.nextBtn) UI.nextBtn.style.display = "block";
 
-  if (UI.choicesList) {
-    UI.choicesList.innerHTML = "";
-    const labels = ["A", "B", "C", "D"];
-    state.currentChoices.forEach((choice, idx) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "choice-btn";
-      btn.dataset.idx = String(idx);
-      btn.textContent = `${labels[idx] || idx + 1}. ${choice.text}`;
-      btn.addEventListener("click", () => handleAnswer(idx));
-      UI.choicesList?.appendChild(btn);
-    });
-  }
-
-  renderHud();
-}
-
-function handleHint() {
-  if (!state.active || state.answered || state.hintsLeft <= 0 || !UI.choicesList) return;
-  const wrongIndices = state.currentChoices
-    .map((c, idx) => (!c.isCorrect ? idx : -1))
-    .filter((idx) => idx !== -1);
-
-  for (const idx of shuffle(wrongIndices).slice(0, 2)) {
-    const btn = /** @type {HTMLButtonElement | null} */ (
-      UI.choicesList.querySelector(`button[data-idx="${idx}"]`)
-    );
-    if (btn) {
-      btn.disabled = true;
-      btn.classList.add("eliminated");
-    }
-  }
-
-  state.hintsLeft -= 1;
   renderHud();
 }
 
@@ -444,8 +317,7 @@ function beginQuizSession(params) {
     hintsLeft: STARTING_HINTS,
     timeLeft: SECONDS_PER_QUESTION,
     totalElapsed: 0,
-    answered: false,
-    currentChoices: []
+    answered: false
   };
   showView("QUIZ");
   loadQuestion();
@@ -556,7 +428,7 @@ function tick(now) {
     state.timeLeft = Math.max(0, state.timeLeft - dt);
     renderHud();
     if (state.timeLeft <= 0) {
-      handleAnswer(null);
+      evaluateTypedAnswer(true);
     }
   }
 }
