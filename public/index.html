@@ -3,73 +3,87 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>25-Question Knowledge Quiz</title>
+  <title>25-Question Knowledge Quiz &amp; Live Leaderboard</title>
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <!-- ACCESS / START SCREEN -->
-  <section id="access-screen" class="screen-card-wrap">
-    <div class="quiz-card">
-      <div class="pill">25 QUESTIONS • QUIZ MODE</div>
-      <h1>Knowledge Quiz Challenge</h1>
-      <p class="muted">25 ചോദ്യങ്ങൾക്ക് ഉത്തരം നൽകി നിങ്ങളുടെ സ്കോർ പരിശോധിക്കുക.</p>
+  <div class="page-layout">
+    <!-- MAIN QUIZ COLUMN -->
+    <div class="main-col">
+      <!-- ACCESS / CONTINUE SCREEN -->
+      <section id="access-screen" class="quiz-card">
+        <div class="pill">25 QUESTIONS • ALL AT ONCE</div>
+        <h1>Knowledge Quiz Challenge</h1>
+        <p class="muted">
+          25 ചോദ്യങ്ങളും ഒരുമിച്ച് കാണാം. ശരി ഉത്തരത്തിന് <strong>1 പോയിന്റ്</strong>, തെറ്റിനും എഴുതാത്തതിനും <strong>0 പോയിന്റ്</strong>.
+        </p>
 
-      <label for="player-name">കളിക്കാരന്റെ പേര്</label>
-      <input id="player-name" type="text" placeholder="നിങ്ങളുടെ പേര് നൽകുക" autocomplete="off" />
+        <label for="player-name">കളിക്കാരന്റെ പേര് (Leaderboard-ൽ കാണിക്കും)</label>
+        <input id="player-name" type="text" placeholder="നിങ്ങളുടെ പേര് നൽകുക" autocomplete="off" />
 
-      <label for="access-code">ആക്സസ് കോഡ്</label>
-      <input id="access-code" type="text" placeholder="ഉദാ: KKMQZN02-9153" autocomplete="off" />
+        <label for="access-code">ആക്സസ് കോഡ്</label>
+        <input id="access-code" type="text" placeholder="ഉദാ: KKMQZN02-9153" autocomplete="off" />
 
-      <button id="start-btn" type="button" class="btn primary">Quiz തുടങ്ങുക</button>
-      <p id="login-status" class="status-text"></p>
+        <button id="start-btn" type="button" class="btn primary">Quiz തുടങ്ങുക</button>
+        <p id="login-status" class="status-text"></p>
 
-      <details class="continue-box">
-        <summary>ഉപയോഗിച്ച ആക്സസ് കോഡ് വഴി തുടരുക</summary>
-        <div class="continue-row">
-          <input id="continue-code-input" type="text" placeholder="ഉദാ: KKMQZN01-7842" autocomplete="off" />
-          <button id="continue-btn" type="button" class="btn secondary">Continue</button>
+        <details class="continue-box" open>
+          <summary>ബാക്ക് അടിച്ചവർക്ക് / പാതിവഴിയിൽ നിർത്തിയവർക്ക് തുടരാൻ (Continue)</summary>
+          <div class="continue-row">
+            <input id="continue-code-input" type="text" placeholder="ഉദാ: KKMQZN02-9153" autocomplete="off" />
+            <button id="continue-btn" type="button" class="btn secondary">Continue</button>
+          </div>
+          <p id="continue-status" class="status-text"></p>
+        </details>
+      </section>
+
+      <!-- ALL 25 QUESTIONS SCREEN -->
+      <main id="quiz-screen" class="quiz-card quiz-wide" style="display: none;">
+        <div class="quiz-topbar">
+          <span id="hud-player">Player: -</span>
+          <span id="hud-attended">Attended: 0 / 25</span>
+          <span id="hud-timer">Time: 0.0s</span>
+          <span id="hud-autosave" class="autosave-badge">Saved</span>
         </div>
-        <p id="continue-status" class="status-text"></p>
-      </details>
+
+        <p class="muted" style="margin-top:10px;">
+          എല്ലാ 25 ചോദ്യങ്ങൾക്കും ഉത്തരം ടൈപ്പ് ചെയ്ത ശേഷം താഴെയുള്ള <strong>Submit Quiz</strong> അമർത്തുക. (ഉത്തരം എഴുതാത്ത ചോദ്യങ്ങൾക്ക് 0 പോയിന്റ് ലഭിക്കും.)
+        </p>
+
+        <div id="all-questions-container" class="all-questions-list"></div>
+
+        <div class="submit-footer">
+          <button id="submit-all-btn" type="button" class="btn primary">Submit Quiz</button>
+          <p id="submit-status" class="status-text"></p>
+        </div>
+      </main>
+
+      <!-- RESULT SCREEN -->
+      <section id="result-screen" class="quiz-card quiz-wide" style="display: none;">
+        <div class="pill">SUBMITTED</div>
+        <h2>നിങ്ങളുടെ ഫലം</h2>
+        <p id="result-summary" class="result-summary"></p>
+        <p id="result-submit-time" class="status-text"></p>
+        <div id="review-list" class="all-questions-list" style="margin-top:14px;"></div>
+        <button id="back-home-btn" type="button" class="btn secondary" style="width:100%;margin-top:14px;">ഹോം സ്ക്രീനിലേക്ക് മടങ്ങുക</button>
+      </section>
     </div>
-  </section>
 
-  <!-- QUIZ SCREEN -->
-  <main id="quiz-screen" class="screen-card-wrap" style="display: none;">
-    <div class="quiz-card quiz-wide">
-      <div class="quiz-topbar">
-        <span id="hud-player">Player: -</span>
-        <span id="hud-qnum">Question: 1 / 25</span>
-        <span id="hud-score">Score: 0</span>
-        <span id="hud-timer">Time: 20.0s</span>
+    <!-- LIVE LEADERBOARD SIDEBAR (NO ACCESS CODE SHOWN) -->
+    <aside class="leaderboard-col">
+      <div class="quiz-card">
+        <div class="lb-header">
+          <div>
+            <div class="pill">LIVE LEADERBOARD</div>
+            <h2 style="margin:6px 0 0 0;">മുന്നിൽ നിൽക്കുന്നവർ</h2>
+          </div>
+          <button id="refresh-lb-btn" type="button" class="btn secondary" style="min-height:36px;padding:6px 12px;font-size:12.5px;">Refresh</button>
+        </div>
+        <p class="muted" style="margin:6px 0 12px 0;">പേരും സ്കോറും സമയവും മാത്രം (Access Code കാണിക്കില്ല)</p>
+        <div id="leaderboard-list" class="lb-list">ലോഡ് ചെയ്യുന്നു...</div>
       </div>
-
-      <div class="q-meta">
-        <span id="q-category" class="pill">GENERAL</span>
-        <button id="hint-btn" type="button" class="btn hint">Hint (3 left)</button>
-      </div>
-
-      <h2 id="q-prompt" class="q-prompt"></h2>
-      <div id="choices-list" class="choices-list"></div>
-
-      <div id="feedback-panel" class="feedback-panel" style="display: none;">
-        <div id="feedback-heading" class="feedback-heading"></div>
-        <p id="feedback-text" class="feedback-text"></p>
-        <button id="next-btn" type="button" class="btn primary">അടുത്ത ചോദ്യം</button>
-      </div>
-    </div>
-  </main>
-
-  <!-- RESULT SCREEN -->
-  <section id="result-screen" class="screen-card-wrap" style="display: none;">
-    <div class="quiz-card">
-      <div class="pill">QUIZ COMPLETED</div>
-      <h2>നിങ്ങളുടെ ഫലം</h2>
-      <p id="result-summary" class="result-summary"></p>
-      <p id="result-sync-status" class="status-text"></p>
-      <button id="restart-btn" type="button" class="btn primary">വീണ്ടും ശ്രമിക്കുക</button>
-    </div>
-  </section>
+    </aside>
+  </div>
 
   <script src="/game.js"></script>
 </body>
