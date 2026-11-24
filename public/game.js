@@ -8,33 +8,110 @@ const ENDPOINTS = {
   leaderboard: "/api/leaderboard"
 };
 
+const QUESTIONS_PER_USER = 25;
+
 /** @type {TypedQuizQuestion[]} */
-const QUIZ_QUESTIONS = [
-  { id: "q01", category: "Science", prompt: "ചെടികൾ സൂര്യപ്രകാശത്തിന്റെ സഹായത്തോടെ ഭക്ഷണം ഉണ്ടാക്കുന്ന പ്രക്രിയ ഏതാണ്?", answers: ["PHOTOSYNTHESIS", "പ്രകാശസംശ്ലേഷണം"], explanation: "സൂര്യപ്രകാശം ഉപയോഗിച്ച് ചെടികൾ ഭക്ഷണം നിർമ്മിക്കുന്നതിനെ Photosynthesis എന്ന് വിളിക്കുന്നു." },
-  { id: "q02", category: "Geography", prompt: "ഭൂമിയിലെ ഏറ്റവും വലിയ സമുദ്രം ഏതാണ്?", answers: ["PACIFIC OCEAN", "PACIFIC", "പസഫിക് സമുദ്രം"], explanation: "Pacific Ocean ആണ് ഏറ്റവും വലിയ സമുദ്രം." },
-  { id: "q03", category: "GK", prompt: "കേരളത്തിൽ ആകെ എത്ര ജില്ലകളുണ്ട്?", answers: ["14", "പതിനാല്"], explanation: "കേരളത്തിൽ ആകെ 14 ജില്ലകളാണുള്ളത്." },
-  { id: "q04", category: "Sports", prompt: "ഒരു സാധാരണ ഫുട്ബോൾ ടീമിൽ എത്ര കളിക്കാർ കളിക്കുന്നു?", answers: ["11", "പതിനൊന്ന്"], explanation: "ഒരു ടീമിൽ 11 കളിക്കാരാണ് ഉണ്ടാകുക." },
-  { id: "q05", category: "Science", prompt: "ജലത്തിന്റെ രാസസൂത്രം (Chemical formula) ഏതാണ്?", answers: ["H2O", "H₂O"], explanation: "രണ്ട് ഹൈഡ്രജൻ ആറ്റവും ഒരു ഓക്സിജൻ ആറ്റവും ചേർന്നതാണ് H2O." },
-  { id: "q06", category: "Geography", prompt: "ഇന്ത്യയുടെ തലസ്ഥാന നഗരം ഏതാണ്?", answers: ["NEW DELHI", "DELHI", "ന്യൂഡൽഹി", "ന്യൂഡെൽഹി"], explanation: "New Delhi ആണ് ഇന്ത്യയുടെ തലസ്ഥാനം." },
-  { id: "q07", category: "Math", prompt: "15 × 4 എത്രയാണ്?", answers: ["60", "അറുപത്"], explanation: "15-നെ 4 കൊണ്ട് ഗുണിച്ചാൽ 60 ലഭിക്കും." },
-  { id: "q08", category: "History", prompt: "ഇന്ത്യയ്ക്ക് സ്വാതന്ത്ര്യം ലഭിച്ചത് ഏത് വർഷമാണ്?", answers: ["1947"], explanation: "1947 ഓഗസ്റ്റ് 15-നാണ് ഇന്ത്യയ്ക്ക് സ്വാതന്ത്ര്യം ലഭിച്ചത്." },
-  { id: "q09", category: "Nature", prompt: "ഏറ്റവും വേഗത്തിൽ ഓടുന്ന കരയിലെ ജീവി ഏതാണ്?", answers: ["CHEETAH", "ചീറ്റ", "ചീറ്റപ്പുലി"], explanation: "Cheetah ആണ് കരയിലെ ഏറ്റവും വേഗതയുള്ള ജീവി." },
-  { id: "q10", category: "Culture", prompt: "കേരളത്തിലെ പ്രശസ്തമായ വിളവെടുപ്പ് ഉത്സവം ഏതാണ്?", answers: ["ONAM", "ഓണം"], explanation: "കേരളത്തിന്റെ ദേശീയ ഉത്സവവും വിളവെടുപ്പ് ഉത്സവവുമാണ് ഓണം." },
-  { id: "q11", category: "Science", prompt: "ശബ്ദം ശൂന്യതയിലൂടെ സഞ്ചരിക്കുമോ? (അതെ / ഇല്ല)", answers: ["ഇല്ല", "NO", "ILLA"], explanation: "ശബ്ദത്തിന് സഞ്ചരിക്കാൻ വായു പോലുള്ള മാധ്യമം ആവശ്യമാണ്." },
-  { id: "q12", category: "Geography", prompt: "ലോകത്തിലെ ഏറ്റവും ഉയരം കൂടിയ പർവതശിഖരം ഏതാണ്?", answers: ["MOUNT EVEREST", "EVEREST", "എവറസ്റ്റ്"], explanation: "Mount Everest ആണ് ലോകത്തിലെ ഏറ്റവും ഉയരം കൂടിയ കൊടുമുടി." },
-  { id: "q13", category: "Math", prompt: "144-ന്റെ വർഗ്ഗമൂലം (Square root) എത്രയാണ്?", answers: ["12", "പന്ത്രണ്ട്"], explanation: "12 × 12 = 144 ആയതിനാൽ വർഗ്ഗമൂലം 12 ആണ്." },
-  { id: "q14", category: "Sports", prompt: "ഒളിമ്പിക് പതാകയിൽ എത്ര വളയങ്ങളുണ്ട്?", answers: ["5", "അഞ്ച്"], explanation: "ഒളിമ്പിക് പതാകയിൽ പരസ്പരം ബന്ധിപ്പിച്ച 5 വളയങ്ങളാണുള്ളത്." },
-  { id: "q15", category: "Science", prompt: "സൗരയൂഥത്തിലെ ഏറ്റവും വലിയ ഗ്രഹം ഏതാണ്?", answers: ["JUPITER", "വ്യാഴം"], explanation: "Jupiter ആണ് സൗരയൂഥത്തിലെ ഏറ്റവും വലിയ ഗ്രഹം." },
-  { id: "q16", category: "Geography", prompt: "ലോകത്തിലെ ഏറ്റവും നീളം കൂടിയ നദിയായി പൊതുവെ കണക്കാക്കപ്പെടുന്നത് ഏതാണ്?", answers: ["NILE", "നൈൽ"], explanation: "Nile നദിയാണ് ലോകത്തിലെ ഏറ്റവും നീളം കൂടിയ നദിയായി പൊതുവെ പറയപ്പെടുന്നത്." },
-  { id: "q17", category: "Culture", prompt: "കഥകളി ഏത് സംസ്ഥാനത്തിന്റെ പരമ്പരാഗത കലാരൂപമാണ്?", answers: ["KERALA", "കേരളം"], explanation: "കേരളത്തിന്റെ പരമ്പരാഗത ശാസ്ത്രീയ കലാരൂപമാണ് കഥകളി." },
-  { id: "q18", category: "Math", prompt: "25% of 200 എത്രയാണ്?", answers: ["50", "അൻപത്"], explanation: "200-ന്റെ 25% (നാലിലൊന്ന്) 50 ആണ്." },
-  { id: "q19", category: "Science", prompt: "മനുഷ്യശരീരത്തിലെ ഏറ്റവും വലിയ അവയവം ഏതാണ്?", answers: ["SKIN", "ത്വക്ക്", "ചർമ്മം"], explanation: "Skin (ത്വക്ക്) ആണ് മനുഷ്യശരീരത്തിലെ ഏറ്റവും വലിയ അവയവം." },
-  { id: "q20", category: "History", prompt: "ചന്ദ്രനിൽ ആദ്യം കാലുകുത്തിയ മനുഷ്യൻ ആര്?", answers: ["NEIL ARMSTRONG", "ARMSTRONG", "നീൽ ആംസ്ട്രോംഗ്"], explanation: "1969-ൽ അപ്പോളോ 11 ദൗത്യത്തിലാണ് Neil Armstrong ചന്ദ്രനിൽ ഇറങ്ങിയത്." },
-  { id: "q21", category: "Nature", prompt: "മരങ്ങൾ ഓക്സിജൻ പുറത്തുവിടാൻ ആഗിരണം ചെയ്യുന്ന പ്രധാന വാതകം ഏതാണ്?", answers: ["CARBON DIOXIDE", "CO2", "കാർബൺ ഡയോക്സൈഡ്"], explanation: "Carbon Dioxide ആഗിരണം ചെയ്താണ് ചെടികൾ ഓക്സിജൻ പുറത്തുവിടുന്നത്." },
-  { id: "q22", category: "Sports", prompt: "ക്രിക്കറ്റിൽ ഒരു ഓവറിൽ സാധാരണയായി എത്ര നിയമപരമായ പന്തുകളുണ്ട്?", answers: ["6", "ആറ്"], explanation: "ഒരു ഓവറിൽ 6 നിയമപരമായ പന്തുകളാണുള്ളത്." },
-  { id: "q23", category: "GK", prompt: "കമ്പ്യൂട്ടറിന്റെ 'Brain' എന്ന് സാധാരണയായി വിളിക്കുന്നത് ഏതിനെയാണ്?", answers: ["CPU"], explanation: "Central Processing Unit (CPU) ആണ് കമ്പ്യൂട്ടറിന്റെ പ്രധാന പ്രോസസ്സിംഗ് യൂണിറ്റ്." },
-  { id: "q24", category: "Math", prompt: "9² (9 square) എത്രയാണ്?", answers: ["81", "എൺപത്തിയൊന്ന്"], explanation: "9 × 9 = 81 ആണ്." },
-  { id: "q25", category: "GK", prompt: "ഇന്ത്യൻ ഭരണഘടന നിലവിൽ വന്ന വർഷം ഏതാണ്?", answers: ["1950"], explanation: "1950 ജനുവരി 26-നാണ് ഇന്ത്യൻ ഭരണഘടന നിലവിൽ വന്നത്." }
+const HARD_QUESTION_POOL = [
+  { id: "h001", category: "Science", prompt: "What is the rarest naturally occurring element in Earth's crust?", answers: ["ASTATINE"], explanation: "Astatine is estimated to be the rarest naturally occurring element in Earth's crust." },
+  { id: "h002", category: "Science", prompt: "Which subatomic particle is its own antiparticle and has zero electric charge?", answers: ["PHOTON"], explanation: "A photon is a gauge boson with zero charge and is its own antiparticle." },
+  { id: "h003", category: "Science", prompt: "What phenomenon causes light to bend when passing through a medium with a varying refractive index like a mirage?", answers: ["REFRACTION"], explanation: "Refraction bends light rays across layers of air with different temperatures and densities." },
+  { id: "h004", category: "Science", prompt: "Which organelle in eukaryotic cells is responsible for lipid synthesis and detoxification?", answers: ["SMOOTH ENDOPLASMIC RETICULUM", "SER"], explanation: "The smooth endoplasmic reticulum synthesizes lipids and detoxifies certain chemicals." },
+  { id: "h005", category: "Science", prompt: "What is the SI unit of electrical capacitance?", answers: ["FARAD"], explanation: "Capacitance is measured in farads (F)." },
+  { id: "h006", category: "Science", prompt: "Which law states that the total pressure of a gas mixture equals the sum of partial pressures of individual gases?", answers: ["DALTONS LAW", "DALTON'S LAW", "DALTON"], explanation: "Dalton's law of partial pressures describes gas mixtures." },
+  { id: "h007", category: "Science", prompt: "What type of bond involves sharing electron pairs between atoms?", answers: ["COVALENT", "COVALENT BOND"], explanation: "Covalent bonds form when atoms share pairs of electrons." },
+  { id: "h008", category: "Science", prompt: "Which enzyme unwinds the DNA double helix ahead of the replication fork?", answers: ["HELICASE"], explanation: "DNA helicase separates double-stranded DNA into single strands." },
+  { id: "h009", category: "Science", prompt: "What is the approximate speed of light in a vacuum in meters per second (round to nearest 10^8, e.g. 300000000)?", answers: ["300000000", "3E8", "3 X 10^8"], explanation: "Light travels at approximately 299,792,458 m/s (~300,000,000 m/s) in vacuum." },
+  { id: "h010", category: "Science", prompt: "Which thermodynamic process occurs at constant temperature?", answers: ["ISOTHERMAL", "ISOTHERMAL PROCESS"], explanation: "An isothermal process takes place at constant temperature." },
+  { id: "h011", category: "Science", prompt: "What is the powerhouse of the cell that generates most ATP via oxidative phosphorylation?", answers: ["MITOCHONDRION", "MITOCHONDRIA"], explanation: "Mitochondria produce ATP through cellular respiration." },
+  { id: "h012", category: "Science", prompt: "Which acid is found in high concentration in gastric juice?", answers: ["HYDROCHLORIC ACID", "HCL"], explanation: "Hydrochloric acid (HCl) helps digest food and kill pathogens in the stomach." },
+  { id: "h013", category: "Science", prompt: "What is the term for a material with zero electrical resistance below a critical temperature?", answers: ["SUPERCONDUCTOR", "SUPERCONDUCTIVITY"], explanation: "Superconductors exhibit zero electrical resistance below their critical temperature." },
+  { id: "h014", category: "Science", prompt: "Which part of the human brain regulates balance, posture, and motor coordination?", answers: ["CEREBELLUM"], explanation: "The cerebellum coordinates voluntary movements and balance." },
+  { id: "h015", category: "Science", prompt: "What is the name of the process by which a solid changes directly into a gas?", answers: ["SUBLIMATION"], explanation: "Sublimation is the direct transition from solid to gas." },
+  { id: "h016", category: "Geography", prompt: "Which strait separates Asia from North America?", answers: ["BERING STRAIT", "BERING"], explanation: "The Bering Strait lies between Russia (Asia) and Alaska (North America)." },
+  { id: "h017", category: "Geography", prompt: "What is the capital city of Kazakhstan?", answers: ["ASTANA"], explanation: "Astana is the capital of Kazakhstan." },
+  { id: "h018", category: "Geography", prompt: "Which African lake is the deepest in the world?", answers: ["LAKE TANGANYIKA", "TANGANYIKA"], explanation: "Lake Tanganyika is the deepest lake in Africa and second deepest globally." },
+  { id: "h019", category: "Geography", prompt: "Which desert is known as the driest non-polar desert on Earth?", answers: ["ATACAMA", "ATACAMA DESERT"], explanation: "The Atacama Desert in Chile is famous for extreme aridity." },
+  { id: "h020", category: "Geography", prompt: "Which country has the longest coastline in the world?", answers: ["CANADA"], explanation: "Canada has the longest total coastline of any country." },
+  { id: "h021", category: "Geography", prompt: "What is the name of the deep oceanic trench in the western Pacific Ocean, the deepest known point on Earth?", answers: ["MARIANA TRENCH", "MARIANA"], explanation: "Challenger Deep in the Mariana Trench is the deepest known oceanic point." },
+  { id: "h022", category: "Geography", prompt: "Which mountain range separates Europe and Asia traditionally?", answers: ["URAL MOUNTAINS", "URALS", "URAL"], explanation: "The Ural Mountains form a traditional boundary between Europe and Asia." },
+  { id: "h023", category: "Geography", prompt: "Which river flows through the Grand Canyon?", answers: ["COLORADO", "COLORADO RIVER"], explanation: "The Colorado River carved the Grand Canyon in Arizona." },
+  { id: "h024", category: "Geography", prompt: "Which European country is completely landlocked by South Africa?", answers: ["LESOTHO"], explanation: "Lesotho is an enclave entirely surrounded by South Africa." },
+  { id: "h025", category: "Geography", prompt: "What is the capital city of Australia?", answers: ["CANBERRA"], explanation: "Canberra is the capital city of Australia." },
+  { id: "h026", category: "Geography", prompt: "Which sea is bordered by Jordan and Israel and has high salinity?", answers: ["DEAD SEA"], explanation: "The Dead Sea is known for its extreme salinity and buoyancy." },
+  { id: "h027", category: "Geography", prompt: "Which peninsula contains Spain and Portugal?", answers: ["IBERIAN PENINSULA", "IBERIAN"], explanation: "Spain and Portugal are located on the Iberian Peninsula." },
+  { id: "h028", category: "History", prompt: "In which year did the Berlin Wall fall?", answers: ["1989"], explanation: "The Berlin Wall fell on November 9, 1989." },
+  { id: "h029", category: "History", prompt: "Who was the first Emperor of Rome?", answers: ["AUGUSTUS", "CAESAR AUGUSTUS", "OCTAVIAN"], explanation: "Augustus became the first Roman Emperor in 27 BCE." },
+  { id: "h030", category: "History", prompt: "Which treaty ended World War I?", answers: ["TREATY OF VERSAILLES", "VERSAILLES"], explanation: "The Treaty of Versailles was signed in 1919." },
+  { id: "h031", category: "History", prompt: "Who authored the philosophical work 'The Republic'?", answers: ["PLATO"], explanation: "Plato wrote 'The Republic' around 375 BCE." },
+  { id: "h032", category: "History", prompt: "Which empire built Machu Picchu in the 15th century?", answers: ["INCA", "INCA EMPIRE"], explanation: "Machu Picchu was built by the Inca Empire." },
+  { id: "h033", category: "History", prompt: "What ancient trade network connected East Asia and the Mediterranean?", answers: ["SILK ROAD"], explanation: "The Silk Road facilitated trade and cultural exchange across Eurasia." },
+  { id: "h034", category: "History", prompt: "In which year did the Apollo 11 moon landing take place?", answers: ["1969"], explanation: "Apollo 11 landed on the Moon in July 1969." },
+  { id: "h035", category: "History", prompt: "Who was the Prime Minister of the United Kingdom during most of World War II?", answers: ["WINSTON CHURCHILL", "CHURCHILL"], explanation: "Winston Churchill served as UK Prime Minister from 1940 to 1945." },
+  { id: "h036", category: "History", prompt: "Which ancient civilization developed cuneiform writing?", answers: ["SUMER", "SUMERIANS", "MESOPOTAMIA"], explanation: "Sumerians in ancient Mesopotamia developed cuneiform script." },
+  { id: "h037", category: "History", prompt: "What was the name of the ship on which Charles Darwin sailed around the world?", answers: ["HMS BEAGLE", "BEAGLE"], explanation: "Charles Darwin sailed aboard HMS Beagle (1831–1836)." },
+  { id: "h038", category: "History", prompt: "In which year did the French Revolution begin?", answers: ["1789"], explanation: "The French Revolution began in 1789." },
+  { id: "h039", category: "Math", prompt: "What is the value of 17 × 19?", answers: ["323"], explanation: "17 × 19 = 323." },
+  { id: "h040", category: "Math", prompt: "What is the next prime number after 97?", answers: ["101"], explanation: "97 is prime, and 101 is the next prime number." },
+  { id: "h041", category: "Math", prompt: "What is 2^10 (2 raised to the power of 10)?", answers: ["1024"], explanation: "2^10 equals 1024." },
+  { id: "h042", category: "Math", prompt: "What is the factorial of 6 (6!)?", answers: ["720"], explanation: "6! = 6 × 5 × 4 × 3 × 2 × 1 = 720." },
+  { id: "h043", category: "Math", prompt: "What is the square root of 625?", answers: ["25"], explanation: "25 × 25 = 625." },
+  { id: "h044", category: "Math", prompt: "In a right triangle with legs 9 and 12, what is the hypotenuse?", answers: ["15"], explanation: "sqrt(9^2 + 12^2) = sqrt(81 + 144) = sqrt(225) = 15." },
+  { id: "h045", category: "Math", prompt: "What is the sum of interior angles of a hexagon in degrees?", answers: ["720"], explanation: "(6 - 2) × 180 = 720 degrees." },
+  { id: "h046", category: "Math", prompt: "What is 15% of 400?", answers: ["60"], explanation: "0.15 × 400 = 60." },
+  { id: "h047", category: "Math", prompt: "What is the value of log10(10000)?", answers: ["4"], explanation: "10^4 = 10000, so log10(10000) = 4." },
+  { id: "h048", category: "Math", prompt: "What is the 10th term of the Fibonacci sequence starting 1, 1, 2, 3, 5...?", answers: ["55"], explanation: "1, 1, 2, 3, 5, 8, 13, 21, 34, 55 -> 10th term is 55." },
+  { id: "h049", category: "Math", prompt: "What is 144 divided by 12?", answers: ["12"], explanation: "144 / 12 = 12." },
+  { id: "h050", category: "Math", prompt: "What is 13 squared (13^2)?", answers: ["169"], explanation: "13 × 13 = 169." },
+  { id: "h051", category: "Computing", prompt: "What does HTTP stand for? (HyperText Transfer ...)", answers: ["HYPERTEXT TRANSFER PROTOCOL"], explanation: "HTTP stands for HyperText Transfer Protocol." },
+  { id: "h052", category: "Computing", prompt: "What data structure operates on a Last-In, First-Out (LIFO) principle?", answers: ["STACK"], explanation: "A stack follows Last-In, First-Out (LIFO) ordering." },
+  { id: "h053", category: "Computing", prompt: "What data structure operates on a First-In, First-Out (FIFO) principle?", answers: ["QUEUE"], explanation: "A queue follows First-In, First-Out (FIFO) ordering." },
+  { id: "h054", category: "Computing", prompt: "What is the decimal equivalent of binary 11010?", answers: ["26"], explanation: "16 + 8 + 2 = 26." },
+  { id: "h055", category: "Computing", prompt: "What is the hexadecimal equivalent of decimal 255?", answers: ["FF", "0XFF"], explanation: "255 in decimal is FF in hexadecimal." },
+  { id: "h056", category: "Computing", prompt: "What is the worst-case time complexity of binary search on a sorted array of n elements? (e.g. O(log n))", answers: ["O(LOG N)", "LOG N", "LOGN"], explanation: "Binary search has O(log n) worst-case time complexity." },
+  { id: "h057", category: "Computing", prompt: "Which protocol is commonly used to resolve domain names to IP addresses?", answers: ["DNS", "DOMAIN NAME SYSTEM"], explanation: "DNS translates human-readable domain names into IP addresses." },
+  { id: "h058", category: "Computing", prompt: "What does SQL stand for? (Structured ... Language)", answers: ["STRUCTURED QUERY LANGUAGE"], explanation: "SQL stands for Structured Query Language." },
+  { id: "h059", category: "Computing", prompt: "In Git, which command stages changes for the next commit?", answers: ["GIT ADD", "ADD"], explanation: "git add stages modified files into the index." },
+  { id: "h060", category: "Computing", prompt: "How many bits are in a standard IPv4 address?", answers: ["32"], explanation: "An IPv4 address consists of 32 bits (four 8-bit octets)." },
+  { id: "h061", category: "Computing", prompt: "What does CPU stand for?", answers: ["CENTRAL PROCESSING UNIT"], explanation: "CPU stands for Central Processing Unit." },
+  { id: "h062", category: "Computing", prompt: "Which sorting algorithm has an average and worst-case time complexity of O(n^2)?", answers: ["BUBBLE SORT", "INSERTION SORT", "SELECTION SORT"], explanation: "Bubble sort, selection sort, and insertion sort have O(n^2) worst-case time complexity." },
+  { id: "h063", category: "GK", prompt: "What is the currency of Japan?", answers: ["YEN", "JAPANESE YEN"], explanation: "The official currency of Japan is the Japanese Yen." },
+  { id: "h064", category: "GK", prompt: "Which planet in our solar system has the most confirmed moons (as of recent astronomical catalogs)?", answers: ["SATURN"], explanation: "Saturn has a massive system of moons, exceeding 140 confirmed moons." },
+  { id: "h065", category: "GK", prompt: "What is the largest bone in the human body?", answers: ["FEMUR", "THIGH BONE"], explanation: "The femur is the longest and strongest bone in the human body." },
+  { id: "h066", category: "GK", prompt: "Which gas makes up approximately 78% of Earth's atmosphere?", answers: ["NITROGEN"], explanation: "Nitrogen accounts for roughly 78% of dry air on Earth." },
+  { id: "h067", category: "GK", prompt: "What is the capital city of South Korea?", answers: ["SEOUL"], explanation: "Seoul is the capital of South Korea." },
+  { id: "h068", category: "GK", prompt: "Which instrument is used to measure atmospheric pressure?", answers: ["BAROMETER"], explanation: "A barometer measures atmospheric pressure." },
+  { id: "h069", category: "GK", prompt: "Which vitamin is produced in human skin upon exposure to sunlight?", answers: ["VITAMIN D", "D"], explanation: "UVB sunlight triggers vitamin D synthesis in the skin." },
+  { id: "h070", category: "GK", prompt: "What is the hardest natural mineral on the Mohs scale?", answers: ["DIAMOND"], explanation: "Diamond ranks 10 on the Mohs hardness scale." },
+  { id: "h071", category: "GK", prompt: "Which language has the most native speakers globally?", answers: ["MANDARIN", "MANDARIN CHINESE", "CHINESE"], explanation: "Mandarin Chinese has the largest number of native speakers worldwide." },
+  { id: "h072", category: "GK", prompt: "What is the capital city of Brazil?", answers: ["BRASILIA", "BRASÍLIA"], explanation: "Brasília is the federal capital of Brazil." },
+  { id: "h073", category: "Sports", prompt: "How many players are on the court at once for one volleyball team?", answers: ["6", "SIX"], explanation: "Each volleyball team has 6 players on the court." },
+  { id: "h074", category: "Sports", prompt: "Which country has won the most FIFA World Cup titles?", answers: ["BRAZIL"], explanation: "Brazil has won the FIFA World Cup five times." },
+  { id: "h075", category: "Sports", prompt: "In tennis, what score comes after 30 in a game?", answers: ["40", "FORTY"], explanation: "Points in a tennis game progress 0, 15, 30, 40, game." },
+  { id: "h076", category: "Sports", prompt: "How many holes are on a standard championship golf course?", answers: ["18", "EIGHTEEN"], explanation: "A standard golf round consists of 18 holes." },
+  { id: "h077", category: "Sports", prompt: "In basketball, how many points is a shot made from beyond the three-point arc worth?", answers: ["3", "THREE"], explanation: "A shot outside the three-point line scores 3 points." },
+  { id: "h078", category: "Sports", prompt: "What is the standard length of an Olympic swimming pool in meters?", answers: ["50"], explanation: "An Olympic-size pool is 50 meters long." },
+  { id: "h079", category: "Sports", prompt: "Which Grand Slam tennis tournament is played on clay courts?", answers: ["FRENCH OPEN", "ROLAND GARROS"], explanation: "The French Open (Roland Garros) is played on red clay." },
+  { id: "h080", category: "Sports", prompt: "In cricket, how many runs is a boundary worth when the ball crosses the rope after bouncing?", answers: ["4", "FOUR"], explanation: "A grounded boundary in cricket scores 4 runs." },
+  { id: "h081", category: "Literature", prompt: "Who wrote '1984'?", answers: ["GEORGE ORWELL", "ORWELL"], explanation: "George Orwell published the dystopian novel '1984' in 1949." },
+  { id: "h082", category: "Literature", prompt: "Who is the author of 'Pride and Prejudice'?", answers: ["JANE AUSTEN", "AUSTEN"], explanation: "Jane Austen wrote 'Pride and Prejudice' (1813)." },
+  { id: "h083", category: "Literature", prompt: "Who wrote the play 'Hamlet'?", answers: ["WILLIAM SHAKESPEARE", "SHAKESPEARE"], explanation: "William Shakespeare wrote 'Hamlet'." },
+  { id: "h084", category: "Literature", prompt: "Who wrote 'Crime and Punishment'?", answers: ["FYODOR DOSTOEVSKY", "DOSTOEVSKY"], explanation: "Fyodor Dostoevsky published 'Crime and Punishment' in 1866." },
+  { id: "h085", category: "Literature", prompt: "What is the name of the fictional detective created by Arthur Conan Doyle?", answers: ["SHERLOCK HOLMES", "HOLMES"], explanation: "Sherlock Holmes was created by Sir Arthur Conan Doyle." },
+  { id: "h086", category: "Literature", prompt: "Who wrote 'The Odyssey'?", answers: ["HOMER"], explanation: "'The Odyssey' is an ancient Greek epic poem attributed to Homer." },
+  { id: "h087", category: "Literature", prompt: "Who authored 'To Kill a Mockingbird'?", answers: ["HARPER LEE"], explanation: "Harper Lee published 'To Kill a Mockingbird' in 1960." },
+  { id: "h088", category: "Literature", prompt: "Who wrote 'Don Quixote'?", answers: ["MIGUEL DE CERVANTES", "CERVANTES"], explanation: "Miguel de Cervantes wrote 'Don Quixote'." },
+  { id: "h089", category: "Art & Culture", prompt: "Who painted 'The Starry Night'?", answers: ["VINCENT VAN GOGH", "VAN GOGH"], explanation: "Vincent van Gogh painted 'The Starry Night' in 1889." },
+  { id: "h090", category: "Art & Culture", prompt: "Who composed the 'Moonlight Sonata'?", answers: ["BEETHOVEN", "LUDWIG VAN BEETHOVEN"], explanation: "Ludwig van Beethoven composed Piano Sonata No. 14 ('Moonlight')." },
+  { id: "h091", category: "Art & Culture", prompt: "Who sculpted the marble statue 'David' in Florence?", answers: ["MICHELANGELO"], explanation: "Michelangelo sculpted 'David' between 1501 and 1504." },
+  { id: "h092", category: "Art & Culture", prompt: "Which traditional Japanese theater form uses elaborate makeup and stylized dance/drama?", answers: ["KABUKI"], explanation: "Kabuki is classical Japanese dance-drama." },
+  { id: "h093", category: "Art & Culture", prompt: "In which city is the Louvre Museum located?", answers: ["PARIS"], explanation: "The Louvre Museum is located in Paris, France." },
+  { id: "h094", category: "Science", prompt: "What is the chemical symbol for gold?", answers: ["AU"], explanation: "Au comes from the Latin word for gold, 'aurum'." },
+  { id: "h095", category: "Science", prompt: "What is the chemical symbol for potassium?", answers: ["K"], explanation: "K comes from Neo-Latin 'kalium'." },
+  { id: "h096", category: "Science", prompt: "What is the chemical symbol for sodium?", answers: ["NA"], explanation: "Na comes from Latin 'natrium'." },
+  { id: "h097", category: "Geography", prompt: "Which continent has the largest land area?", answers: ["ASIA"], explanation: "Asia is the largest continent by both area and population." },
+  { id: "h098", category: "Geography", prompt: "Which ocean lies between Africa, Asia, and Australia?", answers: ["INDIAN OCEAN", "INDIAN"], explanation: "The Indian Ocean borders eastern Africa, southern Asia, and western Australia." },
+  { id: "h099", category: "Math", prompt: "What is the cube root of 125?", answers: ["5"], explanation: "5 × 5 × 5 = 125." },
+  { id: "h100", category: "Computing", prompt: "What does RAM stand for?", answers: ["RANDOM ACCESS MEMORY"], explanation: "RAM stands for Random Access Memory." }
 ];
 
 /**
@@ -90,14 +167,18 @@ let lastFrameMs = performance.now();
 let autoSaveTimer = null;
 
 /**
- * @param {TypedQuizQuestion[]} list
- * @param {string} seedStr
+ * Picks a user-specific set of N random questions from the 100-question pool.
+ * Deterministic per user seed (accessCode + sessionId) so the user's 25 questions
+ * never change mid-session or across resume/reload, while different users get different sets.
+ * @param {TypedQuizQuestion[]} pool
+ * @param {string} userSeed
+ * @param {number} count
  * @returns {TypedQuizQuestion[]}
  */
-function deterministicShuffleForUser(list, seedStr) {
+function pickUserRandomQuestions(pool, userSeed, count) {
   let seed = 2166136261;
-  for (let i = 0; i < seedStr.length; i++) {
-    seed ^= seedStr.charCodeAt(i);
+  for (let i = 0; i < userSeed.length; i++) {
+    seed ^= userSeed.charCodeAt(i);
     seed = Math.imul(seed, 16777619);
   }
   const nextRand = () => {
@@ -107,14 +188,14 @@ function deterministicShuffleForUser(list, seedStr) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 
-  const arr = [...list];
-  for (let i = arr.length - 1; i > 0; i--) {
+  const copy = [...pool];
+  for (let i = copy.length - 1; i > 0; i--) {
     const j = Math.floor(nextRand() * (i + 1));
-    const tmp = arr[i];
-    arr[i] = arr[j];
-    arr[j] = tmp;
+    const tmp = copy[i];
+    copy[i] = copy[j];
+    copy[j] = tmp;
   }
-  return arr;
+  return copy.slice(0, Math.min(count, copy.length));
 }
 
 /**
@@ -241,7 +322,7 @@ function renderAll25Questions() {
 
     const head = document.createElement("div");
     head.className = "q-item-head";
-    head.innerHTML = `<span>ചോദ്യം ${idx + 1} / ${state.deck.length}</span><span>${q.category}</span>`;
+    head.innerHTML = `<span>ചോദ്യം ${idx + 1} / ${state.deck.length} (100 Pool)</span><span>${q.category}</span>`;
 
     const title = document.createElement("p");
     title.className = "q-item-title";
@@ -283,13 +364,14 @@ function startOrResumeQuiz(params) {
     Number(params.elapsedSeconds || 0),
     Number(localDraft && localDraft.totalElapsed ? localDraft.totalElapsed : 0)
   );
+  const userSeed = `${code}|${params.sessionId}|${params.playerName}`;
 
   state = {
     active: true,
     sessionId: params.sessionId,
     playerName: params.playerName,
     accessCode: code,
-    deck: deterministicShuffleForUser(QUIZ_QUESTIONS, code || params.sessionId),
+    deck: pickUserRandomQuestions(HARD_QUESTION_POOL, userSeed, QUESTIONS_PER_USER),
     userAnswers: mergedAnswers,
     totalElapsed: startElapsed
   };
@@ -425,7 +507,7 @@ if (UI.startBtn) {
           if (data?.reason === "ALREADY_USED") {
             UI.loginStatus.textContent = "ഈ കോഡ് ഉപയോഗിച്ചു കഴിഞ്ഞു — താഴെയുള്ള Continue വഴി തുടരാം.";
           } else if (data?.reason === "MISSING_APPS_SCRIPT_URL") {
-            UI.loginStatus.textContent = "Render Environment-ൽ APPS_SCRIPT_URL സെറ്റ് ചെയ്തിട്ടില്ല.";
+            UI.loginStatus.textContent = "APPS_SCRIPT_URL സെറ്റ് ചെയ്തിട്ടില്ല.";
           } else {
             UI.loginStatus.textContent = "തെറ്റായ ആക്സസ് കോഡ്.";
           }
